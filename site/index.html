@@ -1,0 +1,440 @@
+<title>Lead Conversion Intelligence</title>
+<style>
+:root{
+  --ground:#F7F8FA;
+  --surface:#FFFFFF;
+  --surface-2:#EFF2F6;
+  --ink:#12181F;
+  --ink-2:#4A5563;
+  --ink-3:#727E8D;
+  --rule:#DDE2E9;
+  --rule-2:#C7CED8;
+  --accent:#1B3A6B;
+  --accent-2:#2E6BD6;
+  --built:#1F7A5A;
+  --built-bg:#E4F0EB;
+  --partial:#A56A11;
+  --partial-bg:#F6EDDC;
+  --new:#A8324A;
+  --new-bg:#F6E4E8;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1117;
+    --surface:#151B23;
+    --surface-2:#1C232D;
+    --ink:#E6EAF0;
+    --ink-2:#AEB8C6;
+    --ink-3:#7E8998;
+    --rule:#252D38;
+    --rule-2:#39434F;
+    --accent:#8FB2E4;
+    --accent-2:#7BA7E8;
+    --built:#5FBF97;
+    --built-bg:#16302A;
+    --partial:#D9A445;
+    --partial-bg:#332918;
+    --new:#E4849A;
+    --new-bg:#331E24;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1117;
+  --surface:#151B23;
+  --surface-2:#1C232D;
+  --ink:#E6EAF0;
+  --ink-2:#AEB8C6;
+  --ink-3:#7E8998;
+  --rule:#252D38;
+  --rule-2:#39434F;
+  --accent:#8FB2E4;
+  --accent-2:#7BA7E8;
+  --built:#5FBF97;
+  --built-bg:#16302A;
+  --partial:#D9A445;
+  --partial-bg:#332918;
+  --new:#E4849A;
+  --new-bg:#331E24;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent-2);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent-2) 35%,transparent)}
+a:hover{border-bottom-color:var(--accent-2)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+
+.wrap{display:grid;grid-template-columns:210px minmax(0,1fr);gap:56px;max-width:1180px;margin:0 auto;padding:0 32px}
+
+/* rail */
+.rail{position:sticky;top:0;align-self:start;height:100vh;padding:44px 0;display:flex;flex-direction:column;gap:22px;overflow-y:auto}
+.rail-mark{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.rail nav{display:flex;flex-direction:column;gap:1px}
+.rail nav a{
+  font-size:13.5px;color:var(--ink-2);border:0;padding:5px 0 5px 12px;
+  border-left:2px solid var(--rule);line-height:1.35;
+}
+.rail nav a:hover{color:var(--ink);border-left-color:var(--rule-2)}
+
+main{padding:44px 0 120px;min-width:0}
+
+/* masthead */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:26px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:0 0 18px}
+h1{
+  font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,4.4vw,3.1rem);
+  line-height:1.08;letter-spacing:-.015em;margin:0 0 14px;text-wrap:balance;
+}
+.standfirst{font-family:var(--serif);font-size:clamp(1.05rem,1.9vw,1.28rem);line-height:1.45;color:var(--ink-2);margin:0;max-width:34em}
+
+.figures{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--rule);margin-bottom:56px}
+.fig{padding:20px 30px 20px 0;margin-right:30px;border-right:1px solid var(--rule)}
+.fig:last-child{border-right:0;margin-right:0}
+.fig b{display:block;font-family:var(--mono);font-size:1.85rem;font-weight:500;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.fig span{display:block;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-top:7px}
+.fig.b b{color:var(--built)} .fig.p b{color:var(--partial)} .fig.n b{color:var(--new)}
+
+section{margin-bottom:64px;scroll-margin-top:32px}
+h2{
+  font-size:12px;font-family:var(--mono);letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;margin:0 0 22px;padding-bottom:9px;border-bottom:1px solid var(--rule);
+}
+h3{font-size:1.02rem;font-weight:600;margin:0 0 10px;letter-spacing:-.005em}
+p{margin:0 0 15px;max-width:65ch;color:var(--ink-2)}
+p.lead{color:var(--ink)}
+
+/* thesis voice */
+.thesis{
+  font-family:var(--serif);font-size:1.22rem;line-height:1.5;color:var(--ink);
+  border-left:2px solid var(--accent);padding:2px 0 2px 22px;margin:0 0 30px;max-width:44ch;
+}
+
+/* questions */
+.qs{list-style:none;margin:0;padding:0;counter-reset:q;display:grid;gap:0;border-top:1px solid var(--rule)}
+.qs li{
+  counter-increment:q;display:grid;grid-template-columns:36px 1fr;gap:14px;
+  padding:13px 0;border-bottom:1px solid var(--rule);align-items:baseline;
+}
+.qs li::before{content:counter(q,decimal-leading-zero);font-family:var(--mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.qs li span{font-family:var(--serif);font-size:1.06rem;color:var(--ink)}
+
+/* chain */
+.chain{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chain i{
+  font-style:normal;font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;
+  background:var(--surface);border:1px solid var(--rule);padding:6px 10px;color:var(--ink-2);
+}
+.chain i:last-child{border-color:var(--accent);color:var(--accent);background:transparent}
+
+/* tables */
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:520px}
+th{
+  text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;padding:0 14px 9px 0;border-bottom:1px solid var(--rule-2);white-space:nowrap;
+}
+td{padding:11px 14px 11px 0;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+td:first-child{color:var(--ink)}
+tr:last-child td{border-bottom:0}
+td code,th code{font-family:var(--mono);font-size:12.4px;color:var(--ink)}
+
+/* principles */
+.principles{counter-reset:pr}
+.principles tr td:first-child{font-family:var(--serif);font-size:1.02rem;color:var(--ink);width:44%}
+.principles tr td:first-child::before{
+  counter-increment:pr;content:counter(pr) ".";font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);margin-right:9px;font-variant-numeric:tabular-nums;
+}
+
+/* screen grid */
+.group{margin-bottom:26px}
+.group-h{display:flex;align-items:baseline;gap:11px;margin-bottom:11px}
+.group-h strong{font-size:13.5px;font-weight:600;letter-spacing:-.003em}
+.group-h em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:6px}
+.s{
+  display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline;
+  background:var(--surface);border:1px solid var(--rule);border-top:2px solid var(--rule-2);
+  padding:9px 11px;font-size:13px;line-height:1.32;
+}
+.s code{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-3)}
+.s.b{border-top-color:var(--built)} .s.b code{color:var(--built)}
+.s.p{border-top-color:var(--partial)} .s.p code{color:var(--partial)}
+.s.n{border-top-color:var(--new);background:var(--new-bg)} .s.n code{color:var(--new)}
+
+.key{display:flex;flex-wrap:wrap;gap:20px;margin-bottom:26px;font-size:12.5px;color:var(--ink-3)}
+.key span{display:flex;align-items:center;gap:7px}
+.key i{width:16px;height:3px;display:block}
+
+/* ranked gaps */
+.gaps{list-style:none;margin:0;padding:0;counter-reset:g;border-top:1px solid var(--rule)}
+.gaps li{counter-increment:g;display:grid;grid-template-columns:26px 1fr;gap:14px;padding:15px 0;border-bottom:1px solid var(--rule)}
+.gaps li::before{content:counter(g);font-family:var(--mono);font-size:12px;color:var(--new);font-variant-numeric:tabular-nums;padding-top:2px}
+.gaps h3{margin-bottom:5px}
+.gaps p{margin:0;font-size:14.2px;max-width:62ch}
+
+/* pipeline */
+.pipe{font-family:var(--mono);font-size:12.5px;line-height:2;background:var(--surface);border:1px solid var(--rule);padding:18px 20px;overflow-x:auto;color:var(--ink-2);margin-bottom:20px}
+.pipe b{color:var(--ink);font-weight:600}
+.pipe u{text-decoration:none;color:var(--accent-2)}
+
+.note{border-left:2px solid var(--partial);background:var(--partial-bg);padding:14px 18px;margin-bottom:26px}
+.note p{margin:0;color:var(--ink);font-size:14.2px;max-width:62ch}
+.note strong{font-weight:600}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:26px}
+
+footer{border-top:2px solid var(--ink);padding-top:20px;font-size:13px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:8px 26px}
+footer code{font-family:var(--mono);font-size:12px}
+
+@media (max-width:880px){
+  .wrap{grid-template-columns:1fr;gap:0;padding:0 22px}
+  .rail{position:static;height:auto;padding:28px 0 0;border-bottom:1px solid var(--rule)}
+  .rail nav{flex-flow:row wrap;gap:0 16px}
+  .rail nav a{border-left:0;padding:4px 0}
+  main{padding-top:30px}
+  .fig{padding-right:22px;margin-right:22px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<aside class="rail">
+  <div class="rail-mark">Specification<br>v1 · Aug 2026</div>
+  <nav>
+    <a href="#thesis">Thesis</a>
+    <a href="#questions">Five questions</a>
+    <a href="#principles">Ten principles</a>
+    <a href="#chain">The chain</a>
+    <a href="#screens">35 screens</a>
+    <a href="#gaps">Gaps</a>
+    <a href="#ai">AI layer</a>
+  </nav>
+</aside>
+
+<main>
+<header class="masthead">
+  <p class="eyebrow">Enterprise CRM · Product specification</p>
+  <h1>Lead Conversion Intelligence</h1>
+  <p class="standfirst">A data-driven system for lead management, follow-up, conversion diagnosis and revenue improvement — specified against an existing, client-approved application.</p>
+</header>
+
+<div class="figures">
+  <div class="fig"><b>35</b><span>Thesis sections</span></div>
+  <div class="fig"><b>35</b><span>Screens specified</span></div>
+  <div class="fig b"><b>17</b><span>Already built</span></div>
+  <div class="fig p"><b>12</b><span>Partial</span></div>
+  <div class="fig n"><b>6</b><span>To build</span></div>
+</div>
+
+<section id="thesis">
+  <h2>The thesis</h2>
+  <p class="thesis">The purpose of the CRM is not to generate more activity. Its purpose is to convert activity into measurable outcomes, convert outcomes into evidence, and convert evidence into management decisions.</p>
+  <p class="lead">The system is not a contact database and not a telecalling app. A hospital receiving 100 leads and converting 50 does not need 150 leads to reach 70 conversions. It needs to know what happened to the other 50 — how many hit a price objection, how many never got a proper follow-up, how many booked and never visited, how many are still recoverable.</p>
+  <p>Only after the leak is measured should more advertising spend be considered.</p>
+</section>
+
+<section id="questions">
+  <h2>What the system must answer</h2>
+  <ol class="qs">
+    <li><span>Where are the leads coming from?</span></li>
+    <li><span>What is happening to every lead after it enters the system?</span></li>
+    <li><span>Why are some leads converting?</span></li>
+    <li><span>Why are some leads not converting?</span></li>
+    <li><span>What action should management take to increase conversions without blindly increasing advertising expenditure?</span></li>
+  </ol>
+</section>
+
+<section id="principles">
+  <h2>Ten operating principles, as enforced rules</h2>
+  <p>Each principle is implemented as a guard in a specific screen, not as guidance in a document.</p>
+  <div class="tbl-scroll">
+  <table class="principles">
+    <thead><tr><th>Principle</th><th>Enforced by</th><th>Enforcement</th></tr></thead>
+    <tbody>
+      <tr><td>No lead without source</td><td><code>S1</code></td><td>Creation rejected unless source, campaign, platform, landing page and timestamp are all present</td></tr>
+      <tr><td>No call without a remark</td><td><code>A3</code></td><td>Save disabled until all seven remark parts are filled</td></tr>
+      <tr><td>No message without a purpose</td><td><code>S3 · A6</code></td><td>Templates require a stated purpose and nurture step; only approved ones reach the composer</td></tr>
+      <tr><td>No repeated message inside the 48-hour cycle</td><td><code>A6</code></td><td>Send blocked before 48h; same channel twice blocked; same template twice blocked</td></tr>
+      <tr><td>No final closure without a reason</td><td><code>A9 · S4</code></td><td>Mandatory-reason flag on closure statuses cannot be disabled by admin</td></tr>
+      <tr><td>No blame without data</td><td><code>M6</code></td><td>Outcome metrics never shown without process compliance and lead-quality mix beside them</td></tr>
+      <tr><td>No decision without evidence</td><td><code>L5 · L6</code></td><td>A conclusion cannot be saved or published without evidence links at each level</td></tr>
+      <tr><td>No ad spend before funnel diagnosis</td><td><code>L1 · L2</code></td><td>Recoverable leads shown before any volume recommendation; ROI sorts by cost per surgery</td></tr>
+      <tr><td>No expired lead without recoverability analysis</td><td><code>A9 · O4</code></td><td>Every closure assigns a segment; recoverable requires action, owner and review date</td></tr>
+      <tr><td>No status without an audit trail</td><td><code>S5</code></td><td>Append-only log with no delete path in any role, admin included</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="chain">
+  <h2>The chain</h2>
+  <p>Every business result must be traceable from the final conversion back to the source, campaign, disease, agent, communication activity, patient response and exact remark.</p>
+  <div class="chain">
+    <i>Lead source</i><i>Patient contact</i><i>Qualification</i><i>Communication</i><i>Follow-up</i><i>Appointment</i><i>Consultation</i><i>Financial counseling</i><i>Conversion or loss reason</i><i>Corrective action</i>
+  </div>
+</section>
+
+<section id="screens">
+  <h2>Thirty-five screens</h2>
+  <p>Every screen traces to the thesis sections it implements, and every thesis section is covered by at least one screen. Status is measured against the existing Base44 application the client has already approved.</p>
+  <div class="key">
+    <span><i style="background:var(--built)"></i> Built — route exists, covers the spec</span>
+    <span><i style="background:var(--partial)"></i> Partial — exists as a component or subsection</span>
+    <span><i style="background:var(--new)"></i> To build</span>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Agent &amp; telecaller</strong><em>9</em></div>
+    <div class="grid">
+      <div class="s b"><code>A1</code>My Leads</div>
+      <div class="s b"><code>A2</code>Lead Detail 360</div>
+      <div class="s b"><code>A3</code>Call Logging</div>
+      <div class="s p"><code>A4</code>Qualification &amp; Scoring</div>
+      <div class="s b"><code>A5</code>Follow-up Update</div>
+      <div class="s p"><code>A6</code>Communication Composer</div>
+      <div class="s b"><code>A7</code>Daily Tasks</div>
+      <div class="s p"><code>A8</code>Appointment Booking</div>
+      <div class="s p"><code>A9</code>Reason Capture</div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Manager</strong><em>9</em></div>
+    <div class="grid">
+      <div class="s b"><code>M1</code>Manager Dashboard</div>
+      <div class="s b"><code>M2</code>Daily Conversion Monitor</div>
+      <div class="s b"><code>M3</code>Funnel Dashboard</div>
+      <div class="s p"><code>M4</code>Follow-up Compliance</div>
+      <div class="s p"><code>M5</code>Assignment Board</div>
+      <div class="s b"><code>M6</code>Agent Scorecard</div>
+      <div class="s b"><code>M7</code>Team</div>
+      <div class="s n"><code>M8</code>Escalation Desk</div>
+      <div class="s n"><code>M9</code>Comms Performance</div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Leadership &amp; analytics</strong><em>7</em></div>
+    <div class="grid">
+      <div class="s b"><code>L1</code>Founder Dashboard</div>
+      <div class="s b"><code>L2</code>Source &amp; Campaign ROI</div>
+      <div class="s b"><code>L3</code>Cohort Comparison</div>
+      <div class="s b"><code>L4</code>90-Day Trend</div>
+      <div class="s n"><code>L5</code>Drill-Down Explorer</div>
+      <div class="s p"><code>L6</code>15-Day Diagnostic</div>
+      <div class="s b"><code>L7</code>Reports Library</div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Clinical &amp; operations</strong><em>4</em></div>
+    <div class="grid">
+      <div class="s p"><code>O1</code>Appointments &amp; No-shows</div>
+      <div class="s n"><code>O2</code>Financial Counseling</div>
+      <div class="s b"><code>O3</code>IPD &amp; Admission</div>
+      <div class="s p"><code>O4</code>Recovery &amp; Reactivation</div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Administration</strong><em>6</em></div>
+    <div class="grid">
+      <div class="s p"><code>S1</code>Intake &amp; Source Config</div>
+      <div class="s n"><code>S2</code>Assignment Rules</div>
+      <div class="s n"><code>S3</code>Template Library</div>
+      <div class="s p"><code>S4</code>Status &amp; Reason Config</div>
+      <div class="s p"><code>S5</code>Audit Log Viewer</div>
+      <div class="s b"><code>S6</code>Roles &amp; Manual</div>
+    </div>
+  </div>
+</section>
+
+<section id="gaps">
+  <h2>What actually needs building</h2>
+  <p>The six new screens are not equally important. Ranked by how hard the thesis leans on each.</p>
+  <ol class="gaps">
+    <li>
+      <div>
+        <h3>Communication Composer and Template Library <code>A6 · S3</code></h3>
+        <p>The 48-hour alternating model is the centrepiece of the revised thesis. The application currently has no template system and no send-time guard at all — touches are logged after the fact rather than orchestrated.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Drill-Down Explorer <code>L5</code></h3>
+        <p>The nine-level drill is how every management conclusion is meant to be reached, from "conversions fell" down to "two agents did not send the package comparison creative". No drill-down code exists in the application.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Financial Counseling Desk <code>O2</code></h3>
+        <p>The thesis's own worked example turns on four of seven price objectors never receiving counseling. Nothing currently tracks counseling coverage, so that failure is invisible today.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Communication Performance <code>M9</code></h3>
+        <p>Without it there is no way to prove the 48-hour model works, or to find the channel sequence and content that precede conversions.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>15-Day Diagnostic Report <code>L6</code></h3>
+        <p>The recurring management document the entire thesis exists to produce. A trend chart exists; the diagnostic report does not.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Supporting infrastructure <code>M8 · O4 · S2 · S5</code></h3>
+        <p>Escalation desk, recovery console, assignment rules and the audit log viewer. The underlying data is largely already captured — these surface it.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section id="ai">
+  <h2>AI layer — transcription and analysis</h2>
+  <p class="lead">Structured remarks are the hardest rule in the thesis to enforce, because they compete with call volume. An agent finishing a six-minute call does not want to fill seven fields — so remarks end up thin, or agents end up slow.</p>
+  <p>Transcription removes the trade-off. The call itself becomes the evidence, and the remark is drafted from it. The agent's job shifts from typing to confirming.</p>
+
+  <div class="pipe">
+Call audio  <b>→</b>  consent gate<br>
+  <b>→</b>  <u>Soniox</u>     transcript · speaker labels · timestamps<br>
+    <b>→</b>  redaction   strip identifiers before egress<br>
+      <b>→</b>  <u>OpenAI</u>     extraction · classification · summary · drafting<br>
+        <b>→</b>  CRM        draft presented for agent confirmation<br>
+          <b>→</b>  audit      model · prompt version · accepted or edited
+  </div>
+
+  <div class="cols">
+    <div>
+      <h3>What it produces</h3>
+      <p>A drafted seven-part remark; the objection classified against the fixed reason taxonomy; evidence for the eleven qualification factors, each with its supporting quote; a suggested non-conversion reason with a transcript citation; remark-versus-transcript fidelity as a coaching signal; a two-line call summary for the timeline; and narrative drafting for the 15-day report from aggregated metrics.</p>
+    </div>
+    <div>
+      <h3>What it never does</h3>
+      <p>No AI output writes to a lead record unconfirmed. No AI-set status, no AI-closed lead, no AI-sent message. Reason codes come from the configured taxonomy — the model selects, it does not invent. Every extracted claim carries a timestamp; an extraction without a citation is dropped rather than shown.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Two things to settle before any code.</strong> First, there is no telephony integration in the application today — Soniox needs an audio source, and wiring a softphone or PBX is a larger piece of work than either API. Second, call recordings of patients discussing symptoms and finances are sensitive health data: recording consent changes the call opening script, and identifiers should be stripped before anything leaves the building.</p>
+  </div>
+</section>
+
+<footer>
+  <span><code>github.com/charann29/enterprise-lead-conversion-crm</code> — private</span>
+  <span>Specification only · no application code</span>
+</footer>
+</main>
+</div>

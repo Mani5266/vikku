@@ -23,6 +23,7 @@ The CRM is not a contact database and not a telecalling app. It is a **Lead Conv
 | [`screens/`](screens/README.md) | 35 screen specifications, grouped by role, each traced to thesis sections |
 | [`screens/06-existing-app-mapping.md`](screens/06-existing-app-mapping.md) | Status of all 35 screens against the existing client-approved Base44 app |
 | [`reference/`](reference/) | Lookup tables extracted from the thesis: guardrails, reason codes, corrective actions, metrics, lifecycle and follow-up plans |
+| [`site/index.html`](site/index.html) | Source of the published summary page — self-contained HTML, no dependencies |
 | [`source/`](source/) | Original PDF |
 
 ## Screens
