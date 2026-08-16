@@ -23,6 +23,18 @@ This document records what that app already covers against the 35 screens specif
 
 Any new screen should be built on these same primitives — shadcn/Radix, Tailwind, recharts, lucide — so it is visually indistinguishable from the screens the client already signed off.
 
+## How to read the status columns
+
+"Built" below means **a route exists that covers the screen's purpose**. It does not mean the screen's thesis guards are enforced. Two are known not to be — see [Verified enforcement gaps](#verified-enforcement-gaps) — and the [data model reference](../reference/base44-data-model.md) records which screens are blocked by missing schema rather than missing UI.
+
+Read the three layers separately:
+
+| Layer | State |
+|-------|-------|
+| Data model | Strong spine, five entities missing |
+| Screens present | 17 of 35 |
+| Thesis guards enforced | Materially lower — the 48-hour engine and the seven-part remark are both absent |
+
 ## Existing domain logic worth reusing
 
 The app already carries the thesis logic in `src/lib/`, which several of the specified screens depend on:
@@ -48,13 +60,13 @@ Legend — **Built**: a route exists and covers the spec. **Partial**: exists as
 |------|----------------------|--------|
 | A1 My Leads | `/my-leads` — `MyLeads.jsx` | Built |
 | A2 Lead Detail | `/lead/:id` — `LeadDetail.jsx`, `LeadTimeline`, `LeadInteractionHistory`, `LeadSummaryCard` | Built |
-| A3 Call Logging | `/new-call` — `NewCall.jsx` | Built |
-| A4 Qualification & Scoring | `TemperatureSelector.jsx`, `temperatureUtils.jsx` | Partial — no dedicated scoring screen with the 11 factors |
-| A5 Follow-up Update | `/followup-update/:id`, `/followup-protocols`, `ProtocolDayChecklist`, `SuppressionPanel`, `EndPeriodRouter`, `PlanGenerator` | Built |
-| A6 Communication Composer | `ProtocolConversationLog.jsx` logs touches | Partial — logging exists, composing and the 48-hour send guard do not |
-| A7 Daily Tasks | `/tasks` — `DailyTasks.jsx`, `TaskCard`, `TaskSection` | Built |
-| A8 Appointment Booking | `OpdBookingDialog.jsx` | Partial — dialog only, no booking screen |
-| A9 Non-Conversion Reason Capture | `NonConversionReasonPicker.jsx`, `reasonTaxonomy.js`, `ArchiveLeadDialog` | Partial — picker exists; the eight mandatory fields and the evidence link are not enforced |
+| A3 Call Logging | `/new-call` — `NewCall.jsx` | **Partial** — screen exists, but the seven-part remark is not enforced. `feedback` and `remarks` are free-text strings, validated only as non-empty |
+| A4 Qualification & Scoring | `TemperatureSelector.jsx`, `temperatureUtils.jsx`, `InboundLead.temperature` | Partial — no dedicated scoring screen with the 11 factors |
+| A5 Follow-up Update | `/followup-update/:id`, `/followup-protocols`, `LeadFollowupPlan`, `protocolEngine.js`, `ProtocolDayChecklist`, `SuppressionPanel`, `EndPeriodRouter`, `PlanGenerator` | Built — the strongest part of the app; all seven suppression conditions and all four protocols are real fields |
+| A6 Communication Composer | `ProtocolConversationLog.jsx` logs touches | Partial — logging exists; composing, the 48-hour guard and channel rotation are blocked on a missing `Communication` entity |
+| A7 Daily Tasks | `/tasks` — `DailyTasks.jsx`, `TaskCard`, `TaskSection`, `FollowUpSchedule` | Built |
+| A8 Appointment Booking | `OpdBookingDialog.jsx`, `InboundLead.opd_*` fields, `detectNoShows` function | Partial — dialog only; `opd_status` has 5 states against the 10 the thesis specifies |
+| A9 Non-Conversion Reason Capture | `NonConversionReasonPicker.jsx`, `reasonTaxonomy.js`, `ArchiveLeadDialog`, `non_conversion_*` fields | Partial — 6 of the 8 mandatory fields exist; secondary reason, evidence source and responsible person do not |
 
 ### Manager screens
 
@@ -106,11 +118,30 @@ Legend — **Built**: a route exists and covers the spec. **Partial**: exists as
 
 | Status | Count | Screens |
 |--------|-------|---------|
-| Built | 17 | A1, A2, A3, A5, A7, M1, M2, M3, M6, M7, L1, L2, L3, L4, L7, O3, S6 |
-| Partial | 12 | A4, A6, A8, A9, M4, M5, L6, O1, O4, S1, S4, S5 |
+| Built | 16 | A1, A2, A5, A7, M1, M2, M3, M6, M7, L1, L2, L3, L4, L7, O3, S6 |
+| Partial | 13 | A3, A4, A6, A8, A9, M4, M5, L6, O1, O4, S1, S4, S5 |
 | New | 6 | M8, M9, L5, O2, S2, S3 |
 
-49% of the specification is already live in the approved UI, 34% exists in some partial form, and 17% is genuinely new. S6 is counted as built, though its user manual content needs updating to match this specification.
+46% of the specification is live in the approved UI, 37% exists in some partial form, and 17% is genuinely new. S6 is counted as built, though its user manual content needs updating to match this specification.
+
+Weight that against the layer table at the top: screen presence is the most flattering of the three measures. Five of the thirteen partials are blocked on schema rather than UI, and the two enforcement gaps below sit inside screens that otherwise look finished.
+
+## Verified enforcement gaps
+
+Checked against the code, not inferred from file names.
+
+**The seven-part remark is not enforced — A3.** [Section 3.2](../docs/THESIS.md#32-no-call-without-a-remark) is the rule the rest of the thesis leans on hardest: evidence links, remark quality scoring and conversion diagnosis all read from it. `src/pages/NewCall.jsx` validates two free-text fields:
+
+```js
+toast({ title: "Feedback is required", variant: "destructive" });
+toast({ title: "Remarks are required", variant: "destructive" });
+```
+
+`InboundLead.required` is `["patient_name", "phone_number", "feedback", "remarks"]`. `LeadInteraction` does carry useful structured enums in `contact_outcome` and `patient_response`, so the gap is five fields, not seven.
+
+**The 48-hour engine has no data model — A6, M9, S3.** There is no `Communication` entity and no `Template` entity. Channel, template, delivery, read and reply are not stored per message, so there is nothing to check "which channel was used last, and when". The centrepiece of the revised thesis is unenforceable until that schema exists.
+
+Full detail, with the proposed fields and a build order, in [`base44-data-model.md`](../reference/base44-data-model.md).
 
 ## Biggest gaps against the thesis
 

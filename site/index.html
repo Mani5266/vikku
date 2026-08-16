@@ -231,8 +231,8 @@ footer code{font-family:var(--mono);font-size:12px}
 <div class="figures">
   <div class="fig"><b>35</b><span>Thesis sections</span></div>
   <div class="fig"><b>35</b><span>Screens specified</span></div>
-  <div class="fig b"><b>17</b><span>Already built</span></div>
-  <div class="fig p"><b>12</b><span>Partial</span></div>
+  <div class="fig b"><b>16</b><span>Already built</span></div>
+  <div class="fig p"><b>13</b><span>Partial</span></div>
   <div class="fig n"><b>6</b><span>To build</span></div>
 </div>
 
@@ -292,13 +292,16 @@ footer code{font-family:var(--mono);font-size:12px}
     <span><i style="background:var(--partial)"></i> Partial — exists as a component or subsection</span>
     <span><i style="background:var(--new)"></i> To build</span>
   </div>
+  <div class="note">
+    <p><strong>Read this as screen presence, not thesis compliance.</strong> Three layers move at different speeds: the data model is a strong spine with five entities missing; 16 of 35 screens exist; the guards that make this a conversion-intelligence system rather than a telecalling app are materially further behind. Five of the thirteen partials are blocked on schema, not on UI.</p>
+  </div>
 
   <div class="group">
     <div class="group-h"><strong>Agent &amp; telecaller</strong><em>9</em></div>
     <div class="grid">
       <div class="s b"><code>A1</code>My Leads</div>
       <div class="s b"><code>A2</code>Lead Detail 360</div>
-      <div class="s b"><code>A3</code>Call Logging</div>
+      <div class="s p"><code>A3</code>Call Logging</div>
       <div class="s p"><code>A4</code>Qualification &amp; Scoring</div>
       <div class="s b"><code>A5</code>Follow-up Update</div>
       <div class="s p"><code>A6</code>Communication Composer</div>
@@ -362,11 +365,18 @@ footer code{font-family:var(--mono);font-size:12px}
 <section id="gaps">
   <h2>What actually needs building</h2>
   <p>The six new screens are not equally important. Ranked by how hard the thesis leans on each.</p>
+  <p>Two of these are blocked on schema before any interface can be drawn: there is no <code>Communication</code> entity and no <code>Template</code> entity, so channel, template, delivery, read and reply are not stored per message. The follow-up engine, by contrast, is the strongest part of the build — <code>LeadFollowupPlan</code> carries all four protocols and all seven suppression conditions as real fields.</p>
   <ol class="gaps">
     <li>
       <div>
         <h3>Communication Composer and Template Library <code>A6 · S3</code></h3>
-        <p>The 48-hour alternating model is the centrepiece of the revised thesis. The application currently has no template system and no send-time guard at all — touches are logged after the fact rather than orchestrated.</p>
+        <p>The 48-hour alternating model is the centrepiece of the revised thesis. There is no template system and no send-time guard, and nothing stores which channel was last used or when — so the rotation cannot be enforced. Touches are logged after the fact rather than orchestrated.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>The seven-part remark is not enforced <code>A3</code></h3>
+        <p>The rule the rest of the thesis leans on hardest. <code>NewCall.jsx</code> validates two free-text fields, <code>feedback</code> and <code>remarks</code>, as non-empty. Evidence links, remark-quality scoring and conversion diagnosis all read from a structure that is not being captured.</p>
       </div>
     </li>
     <li>

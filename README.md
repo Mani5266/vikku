@@ -23,6 +23,7 @@ The CRM is not a contact database and not a telecalling app. It is a **Lead Conv
 | [`screens/`](screens/README.md) | 35 screen specifications, grouped by role, each traced to thesis sections |
 | [`screens/06-existing-app-mapping.md`](screens/06-existing-app-mapping.md) | Status of all 35 screens against the existing client-approved Base44 app |
 | [`reference/`](reference/) | Lookup tables extracted from the thesis: guardrails, reason codes, corrective actions, metrics, lifecycle and follow-up plans |
+| [`reference/base44-data-model.md`](reference/base44-data-model.md) | The real Base44 entities and fields, the five schema gaps, and the build order |
 | [`site/index.html`](site/index.html) | Source of the published summary page — self-contained HTML, no dependencies |
 | [`source/`](source/) | Original PDF |
 
@@ -82,5 +83,6 @@ The system succeeds only when management can answer: what happened, where it hap
 | [`guardrails.md`](reference/guardrails.md) | The ten principles as enforced rules, plus derived guards |
 | [`reason-codes.md`](reference/reason-codes.md) | The seven closure categories, their sub-reasons, default recoverability and default actions |
 | [`corrective-actions.md`](reference/corrective-actions.md) | Reason-to-action map with owner and screen for each action |
+| [`base44-data-model.md`](reference/base44-data-model.md) | Real entities and fields from `base44/entities/*.jsonc`, code conventions to follow, the five missing entities with proposed schemas, and the schema-first build order |
 | [`metrics.md`](reference/metrics.md) | Every metric with formula and owning screen — contact, funnel, cost, communication, agent, cohort |
 | [`lifecycle-and-plans.md`](reference/lifecycle-and-plans.md) | 20 lifecycle stages, exit statuses, appointment states, the four follow-up plans, channel rotation, nurture sequence |
