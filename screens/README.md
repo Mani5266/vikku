@@ -12,6 +12,8 @@ Specs are grouped by role:
 
 **Total: 35 screens.**
 
+[**Mapping to the existing client-approved app**](06-existing-app-mapping.md) — which of these 35 are already live in the Base44 app the client signed off, which are partial, and which are new.
+
 ## Full index
 
 | # | Screen | Role | Thesis sections |
@@ -63,18 +65,18 @@ Specs are grouped by role:
 | 3.3 No Final Closure Without a Reason | A9, S4 |
 | 3.4 No Decision Without Evidence | L5, S5 |
 | 3.5 Lead Expiry Is Not the End | A9, O4 |
-| 4. Complete Lead Lifecycle | A2, M3 |
+| 4. Complete Lead Lifecycle | A1, A2, M3 |
 | 5. Lead Intake and Source Configuration | S1, L2 |
 | 6. Connected / Not Connected | A3, M3 |
-| 7. Lead Quality Classification | A4 |
+| 7. Lead Quality Classification | A1, A4 |
 | 8. 48-Hour Messaging Pattern | A6, S3 |
 | 9. Alternating WhatsApp / RCS | A6, S3 |
 | 10. Channel Orchestration Logic | A6, M9 |
 | 11. Nurturing Sequence | A6, S3 |
-| 12. Hot Lead Follow-up | A5, A7 |
-| 13. Warm Lead Follow-up | A5, A7 |
-| 14. Cold Lead Follow-up | A5, A7 |
-| 15. Not Connected Follow-up | A5, A7 |
+| 12. Hot Lead Follow-up | A1, A5, A7 |
+| 13. Warm Lead Follow-up | A1, A5, A7 |
+| 14. Cold Lead Follow-up | A1, A5, A7 |
+| 15. Not Connected Follow-up | A1, A5, A7 |
 | 16. Follow-up + Nurturing | A5, A6 |
 | 17. Appointment and Conversion | A8, O1, O2, O3 |
 | 18. Lead Expiry Diagnosis | A9 |
@@ -83,13 +85,23 @@ Specs are grouped by role:
 | 21. Conversion Diagnosis | L3, L5 |
 | 22. Cohort Comparison | L3 |
 | 23. Non-Conversion Reason Structure | A9, S4 |
-| 24. Reason-Based Corrective Action | M8, O2, O4 |
+| 24. Reason-Based Corrective Action | M4, M8, O2, O4 |
 | 25. Drill-Down Technique | L5 |
 | 26. CRM Funnel Metrics | M3, L2, L4 |
 | 27. Communication Performance Metrics | M9 |
-| 28. Agent Performance | M6, M7 |
+| 28. Agent Performance | M4, M6, M7 |
 | 29. Evidence and Audit Trail | S5, A2 |
-| 30. CRM Modules | all |
+| 30.1 Lead Capture | S1 |
+| 30.2 Lead Assignment | M5, M7, S2 |
+| 30.3 Qualification | A4 |
+| 30.4 Communication | A6 |
+| 30.5 Follow-up Scheduler | A5, M4 |
+| 30.6 Appointment | A8, O1 |
+| 30.7 Conversion | O2, O3 |
+| 30.8 Diagnosis | L3, L5 |
+| 30.9 Recovery Campaign | O4 |
+| 30.10 Reporting | L7 |
+| 30.11 Administration | S3, S4, S6 |
 | 31. Manager's Daily Working Pattern | M1, M2, M8 |
 | 32. Fifteen-Day Diagnostic Report | L6 |
 | 33. Sample Management Conclusion | L6 |
