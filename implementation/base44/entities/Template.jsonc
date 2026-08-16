@@ -1,0 +1,120 @@
+// Thesis §9, §11, §30.11 — approved message content.
+// `purpose` is required: Section 11 states every communication must have a
+// defined purpose, and messages must not repeatedly ask "Are you interested?".
+{
+  "name": "Template",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Required. What this message is for. Enforces 'No Message Without a Purpose'."
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "WhatsApp",
+        "RCS",
+        "MMS"
+      ]
+    },
+    "nurture_step": {
+      "type": "number",
+      "description": "1-7, the Section 11 sequence"
+    },
+    "nurture_label": {
+      "type": "string",
+      "enum": [
+        "Acknowledgement",
+        "Education",
+        "Trust",
+        "Treatment Understanding",
+        "Social Proof",
+        "Financial Support",
+        "Action"
+      ]
+    },
+    "disease": {
+      "type": "string"
+    },
+    "temperature": {
+      "type": "string",
+      "enum": [
+        "Hot",
+        "Warm",
+        "Cold",
+        "Not Connected",
+        "Any"
+      ],
+      "default": "Any"
+    },
+    "body": {
+      "type": "string"
+    },
+    "media_type": {
+      "type": "string",
+      "enum": [
+        "None",
+        "Doctor Image",
+        "Hospital Image",
+        "Treatment Information Card",
+        "Procedure Benefit Card",
+        "Patient Education Poster",
+        "Appointment Reminder Creative",
+        "Testimonial Image",
+        "Insurance Information",
+        "Financial Counseling Information",
+        "Location Card",
+        "Recovery Timeline Image",
+        "Before-Visit Checklist",
+        "Call-back Request Card"
+      ],
+      "default": "None"
+    },
+    "media_url": {
+      "type": "string"
+    },
+    "is_price_offer": {
+      "type": "boolean",
+      "default": false,
+      "description": "Section 14 — blocked from Cold Lead plans."
+    },
+    "is_surgery_push": {
+      "type": "boolean",
+      "default": false,
+      "description": "Section 14 — blocked from Cold Lead plans."
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Pending Approval",
+        "Approved",
+        "Rejected",
+        "Retired"
+      ],
+      "default": "Draft"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string"
+    },
+    "rejection_note": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "name",
+    "purpose",
+    "channel",
+    "nurture_step"
+  ]
+}

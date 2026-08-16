@@ -1,0 +1,112 @@
+// Thesis §8-§11, §27 — per-message record.
+// Without this entity the 48-hour alternating model cannot be enforced:
+// there is nothing to answer "which channel was used last, and when".
+{
+  "name": "Communication",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string"
+    },
+    "lead_type": {
+      "type": "string",
+      "enum": [
+        "Inbound",
+        "Outbound",
+        "IPD"
+      ]
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "WhatsApp",
+        "RCS",
+        "MMS"
+      ]
+    },
+    "template_id": {
+      "type": "string"
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "nurture_step": {
+      "type": "number",
+      "description": "1-7, the Section 11 sequence: Acknowledgement, Education, Trust, Treatment Understanding, Social Proof, Financial Support, Action"
+    },
+    "protocol_day": {
+      "type": "number"
+    },
+    "body_snapshot": {
+      "type": "string",
+      "description": "Content as sent. Templates are versioned and may be retired; the sent record must not change underneath the audit trail."
+    },
+    "scheduled_at": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "delivered_at": {
+      "type": "string"
+    },
+    "read_at": {
+      "type": "string"
+    },
+    "replied_at": {
+      "type": "string"
+    },
+    "link_clicked": {
+      "type": "boolean",
+      "default": false
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "Scheduled",
+        "Sent",
+        "Delivered",
+        "Read",
+        "Replied",
+        "Failed",
+        "Suppressed"
+      ],
+      "default": "Scheduled"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "suppressed": {
+      "type": "boolean",
+      "default": false
+    },
+    "suppression_reason": {
+      "type": "string",
+      "description": "Section 12 condition, or a blocked-guard reason. Suppressions are recorded, not silently dropped."
+    },
+    "exception_approved_by": {
+      "type": "string",
+      "description": "Set only when a manager overrides the 48-hour floor. Audited."
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "lead_id",
+    "lead_type",
+    "channel"
+  ]
+}

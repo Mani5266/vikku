@@ -1,0 +1,76 @@
+// Thesis §3.2 — "No Call Without a Remark".
+//
+// NOT a replacement entity. These properties are ADDED to the existing
+// base44/entities/LeadInteraction.jsonc, and `required` is widened.
+//
+// LeadInteraction already covers two of the seven parts:
+//   whether the call connected  ->  contact_outcome (existing enum)
+//   what the patient said       ->  patient_response (existing enum) + patient_said below
+// The five properties below close the gap. `feedback` stays as the free-text
+// narrative; it is no longer the only thing captured.
+{
+  "properties": {
+    "patient_said": {
+      "type": "string",
+      "description": "Part 2 — what the patient actually said, in their terms."
+    },
+    "agent_explained": {
+      "type": "string",
+      "description": "Part 3 — what the agent explained on this call."
+    },
+    "objection_raised": {
+      "type": "string",
+      "description": "Part 4 — sub-reason from reasonTaxonomy.js, or 'None'. Feeds non_conversion_category."
+    },
+    "objection_category": {
+      "type": "string",
+      "enum": [
+        "Financial",
+        "Interest",
+        "Follow-up Failure",
+        "Hospital / Doctor",
+        "Competition",
+        "Lead Quality",
+        "Contactability",
+        "None"
+      ],
+      "description": "Part 4 — matches the existing non_conversion_category enum so the two stay comparable."
+    },
+    "material_shared": {
+      "type": "string",
+      "description": "Part 5 — template name or Communication id. Links the call to what was sent."
+    },
+    "next_action": {
+      "type": "string",
+      "enum": [
+        "Call",
+        "WhatsApp",
+        "RCS/MMS",
+        "Appointment",
+        "Doctor Callback",
+        "Financial Counseling",
+        "Escalate",
+        "Close"
+      ],
+      "description": "Part 6 — what happens next."
+    },
+    "next_action_at": {
+      "type": "string",
+      "description": "Part 7 — when it must happen. Pre-filled from the active LeadFollowupPlan day."
+    },
+    "evidence_ref": {
+      "type": "string",
+      "description": "§23 — transcript timestamp or recording offset once the AI layer is live. Makes an evidence link resolvable."
+    }
+  },
+  "required": [
+    "lead_id",
+    "lead_type",
+    "feedback",
+    "interaction_date",
+    "patient_said",
+    "agent_explained",
+    "next_action",
+    "next_action_at"
+  ]
+}
