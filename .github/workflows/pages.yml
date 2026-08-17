@@ -26,7 +26,12 @@ jobs:
       # The build fails on any broken internal link, so a bad cross-reference
       # never reaches the published site.
       - run: npm run build
+      # enablement: true turns Pages on for the repository if the run's token is
+      # allowed to; otherwise Pages has to be switched on once by an admin under
+      # Settings → Pages → Source: GitHub Actions.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
