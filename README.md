@@ -25,8 +25,31 @@ The CRM is not a contact database and not a telecalling app. It is a **Lead Conv
 | [`reference/`](reference/) | Lookup tables extracted from the thesis: guardrails, reason codes, corrective actions, metrics, lifecycle and follow-up plans |
 | [`reference/base44-data-model.md`](reference/base44-data-model.md) | The real Base44 entities and fields, the five schema gaps, and the build order |
 | [`implementation/`](implementation/README.md) | Drop-in code for build steps 1–2: the `Communication` and `Template` entities, the 48-hour guard, and the seven-part remark form. Runnable self-check, passes the app's eslint |
-| [`site/index.html`](site/index.html) | Source of the published summary page — self-contained HTML, no dependencies |
+| [`site/`](site/) | The specification website: generator, theme and home page. See [Website](#website) |
 | [`source/`](source/) | Original PDF |
+
+## Website
+
+The whole specification is published as a browsable site, generated from the Markdown in this repository — the Markdown stays the source of truth, the site is only a view of it.
+
+```bash
+npm install
+npm run build     # writes dist/
+npm run dev       # builds, then serves dist/ on http://localhost:4173
+```
+
+`npm run build` fails if any internal link or heading anchor does not resolve, so a broken cross-reference cannot reach the published site.
+
+| Path | Contents |
+|------|----------|
+| [`site/build.mjs`](site/build.mjs) | Generator: page manifest, Markdown rendering, search index, link check, dev server |
+| [`site/home.html`](site/home.html) | Home page content — the summary of the whole specification |
+| [`site/theme.css`](site/theme.css) | The single stylesheet, light and dark |
+| [`site/app.js`](site/app.js) | Search, theme toggle, page-TOC scrollspy, mobile nav |
+
+The build produces one page per document, plus `dist/all.html` — the entire specification as a single self-contained file for sharing, and `dist/artifact.html`, the same bundle without a document wrapper.
+
+Deployment is [`.github/workflows/pages.yml`](.github/workflows/pages.yml): every push to `main` builds and publishes to GitHub Pages. It runs once Pages is enabled for the repository under **Settings → Pages → Source: GitHub Actions**.
 
 ## Screens
 

@@ -1,0 +1,236 @@
+<!-- Home page content. Wrapped in the site shell by site/build.mjs.
+     Screen cards carry data-screen="A1"; the build resolves each to the screen
+     page and heading anchor, so the codes never go stale. -->
+<header class="masthead">
+  <p class="eyebrow">Enterprise CRM · Product specification</p>
+  <h1>Lead Conversion Intelligence</h1>
+  <p class="standfirst">A data-driven system for lead management, follow-up, conversion diagnosis and revenue improvement — specified against an existing, client-approved application.</p>
+</header>
+
+<div class="figures">
+  <div class="fig"><b>35</b><span>Thesis sections</span></div>
+  <div class="fig"><b>35</b><span>Screens specified</span></div>
+  <div class="fig b"><b>16</b><span>Already built</span></div>
+  <div class="fig p"><b>13</b><span>Partial</span></div>
+  <div class="fig n"><b>6</b><span>To build</span></div>
+</div>
+
+<section id="thesis">
+  <h2>The thesis</h2>
+  <p class="thesis">The purpose of the CRM is not to generate more activity. Its purpose is to convert activity into measurable outcomes, convert outcomes into evidence, and convert evidence into management decisions.</p>
+  <p class="lead">The system is not a contact database and not a telecalling app. A hospital receiving 100 leads and converting 50 does not need 150 leads to reach 70 conversions. It needs to know what happened to the other 50 — how many hit a price objection, how many never got a proper follow-up, how many booked and never visited, how many are still recoverable.</p>
+  <p>Only after the leak is measured should more advertising spend be considered. The full argument runs to 35 sections in <a href="thesis.html">the thesis</a>.</p>
+</section>
+
+<section id="questions">
+  <h2>What the system must answer</h2>
+  <ol class="qs">
+    <li><span>Where are the leads coming from?</span></li>
+    <li><span>What is happening to every lead after it enters the system?</span></li>
+    <li><span>Why are some leads converting?</span></li>
+    <li><span>Why are some leads not converting?</span></li>
+    <li><span>What action should management take to increase conversions without blindly increasing advertising expenditure?</span></li>
+  </ol>
+</section>
+
+<section id="principles">
+  <h2>Ten operating principles, as enforced rules</h2>
+  <p>Each principle is implemented as a guard in a specific screen, not as guidance in a document. Full enforcement detail, including the derived guards, is in <a href="reference-guardrails.html">Guardrails</a>.</p>
+  <div class="tbl-scroll">
+  <table class="principles">
+    <thead><tr><th>Principle</th><th>Enforced by</th><th>Enforcement</th></tr></thead>
+    <tbody>
+      <tr><td>No lead without source</td><td><code>S1</code></td><td>Creation rejected unless source, campaign, platform, landing page and timestamp are all present</td></tr>
+      <tr><td>No call without a remark</td><td><code>A3</code></td><td>Save disabled until all seven remark parts are filled</td></tr>
+      <tr><td>No message without a purpose</td><td><code>S3 · A6</code></td><td>Templates require a stated purpose and nurture step; only approved ones reach the composer</td></tr>
+      <tr><td>No repeated message inside the 48-hour cycle</td><td><code>A6</code></td><td>Send blocked before 48h; same channel twice blocked; same template twice blocked</td></tr>
+      <tr><td>No final closure without a reason</td><td><code>A9 · S4</code></td><td>Mandatory-reason flag on closure statuses cannot be disabled by admin</td></tr>
+      <tr><td>No blame without data</td><td><code>M6</code></td><td>Outcome metrics never shown without process compliance and lead-quality mix beside them</td></tr>
+      <tr><td>No decision without evidence</td><td><code>L5 · L6</code></td><td>A conclusion cannot be saved or published without evidence links at each level</td></tr>
+      <tr><td>No ad spend before funnel diagnosis</td><td><code>L1 · L2</code></td><td>Recoverable leads shown before any volume recommendation; ROI sorts by cost per surgery</td></tr>
+      <tr><td>No expired lead without recoverability analysis</td><td><code>A9 · O4</code></td><td>Every closure assigns a segment; recoverable requires action, owner and review date</td></tr>
+      <tr><td>No status without an audit trail</td><td><code>S5</code></td><td>Append-only log with no delete path in any role, admin included</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="chain">
+  <h2>The chain</h2>
+  <p>Every business result must be traceable from the final conversion back to the source, campaign, disease, agent, communication activity, patient response and exact remark.</p>
+  <div class="chain">
+    <i>Lead source</i><i>Patient contact</i><i>Qualification</i><i>Communication</i><i>Follow-up</i><i>Appointment</i><i>Consultation</i><i>Financial counseling</i><i>Conversion or loss reason</i><i>Corrective action</i>
+  </div>
+</section>
+
+<section id="screens">
+  <h2>Thirty-five screens</h2>
+  <p>Every screen traces to the thesis sections it implements, and every thesis section is covered by at least one screen. Status is measured against the existing Base44 application the client has already approved — see the <a href="screens-mapping.html">mapping</a>. Each card below opens its specification.</p>
+  <div class="key">
+    <span><i style="background:var(--built)"></i> Built — route exists, covers the spec</span>
+    <span><i style="background:var(--partial)"></i> Partial — exists as a component or subsection</span>
+    <span><i style="background:var(--new)"></i> To build</span>
+  </div>
+  <div class="note">
+    <p><strong>Read this as screen presence, not thesis compliance.</strong> Three layers move at different speeds: the data model is a strong spine with five entities missing; 16 of 35 screens exist; the guards that make this a conversion-intelligence system rather than a telecalling app are materially further behind. Five of the thirteen partials are blocked on schema, not on UI. Entity by entity in <a href="reference-base44-data-model.html">the data model</a>.</p>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Agent &amp; telecaller</strong><em>9</em></div>
+    <div class="grid">
+      <a class="s b" data-screen="A1"><code>A1</code>My Leads</a>
+      <a class="s b" data-screen="A2"><code>A2</code>Lead Detail 360</a>
+      <a class="s p" data-screen="A3"><code>A3</code>Call Logging</a>
+      <a class="s p" data-screen="A4"><code>A4</code>Qualification &amp; Scoring</a>
+      <a class="s b" data-screen="A5"><code>A5</code>Follow-up Update</a>
+      <a class="s p" data-screen="A6"><code>A6</code>Communication Composer</a>
+      <a class="s b" data-screen="A7"><code>A7</code>Daily Tasks</a>
+      <a class="s p" data-screen="A8"><code>A8</code>Appointment Booking</a>
+      <a class="s p" data-screen="A9"><code>A9</code>Reason Capture</a>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Manager</strong><em>9</em></div>
+    <div class="grid">
+      <a class="s b" data-screen="M1"><code>M1</code>Manager Dashboard</a>
+      <a class="s b" data-screen="M2"><code>M2</code>Daily Conversion Monitor</a>
+      <a class="s b" data-screen="M3"><code>M3</code>Funnel Dashboard</a>
+      <a class="s p" data-screen="M4"><code>M4</code>Follow-up Compliance</a>
+      <a class="s p" data-screen="M5"><code>M5</code>Assignment Board</a>
+      <a class="s b" data-screen="M6"><code>M6</code>Agent Scorecard</a>
+      <a class="s b" data-screen="M7"><code>M7</code>Team</a>
+      <a class="s n" data-screen="M8"><code>M8</code>Escalation Desk</a>
+      <a class="s n" data-screen="M9"><code>M9</code>Comms Performance</a>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Leadership &amp; analytics</strong><em>7</em></div>
+    <div class="grid">
+      <a class="s b" data-screen="L1"><code>L1</code>Founder Dashboard</a>
+      <a class="s b" data-screen="L2"><code>L2</code>Source &amp; Campaign ROI</a>
+      <a class="s b" data-screen="L3"><code>L3</code>Cohort Comparison</a>
+      <a class="s b" data-screen="L4"><code>L4</code>90-Day Trend</a>
+      <a class="s n" data-screen="L5"><code>L5</code>Drill-Down Explorer</a>
+      <a class="s p" data-screen="L6"><code>L6</code>15-Day Diagnostic</a>
+      <a class="s b" data-screen="L7"><code>L7</code>Reports Library</a>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Clinical &amp; operations</strong><em>4</em></div>
+    <div class="grid">
+      <a class="s p" data-screen="O1"><code>O1</code>Appointments &amp; No-shows</a>
+      <a class="s n" data-screen="O2"><code>O2</code>Financial Counseling</a>
+      <a class="s b" data-screen="O3"><code>O3</code>IPD &amp; Admission</a>
+      <a class="s p" data-screen="O4"><code>O4</code>Recovery &amp; Reactivation</a>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h"><strong>Administration</strong><em>6</em></div>
+    <div class="grid">
+      <a class="s p" data-screen="S1"><code>S1</code>Intake &amp; Source Config</a>
+      <a class="s n" data-screen="S2"><code>S2</code>Assignment Rules</a>
+      <a class="s n" data-screen="S3"><code>S3</code>Template Library</a>
+      <a class="s p" data-screen="S4"><code>S4</code>Status &amp; Reason Config</a>
+      <a class="s p" data-screen="S5"><code>S5</code>Audit Log Viewer</a>
+      <a class="s b" data-screen="S6"><code>S6</code>Roles &amp; Manual</a>
+    </div>
+  </div>
+</section>
+
+<section id="gaps">
+  <h2>What actually needs building</h2>
+  <p>The six new screens are not equally important. Ranked by how hard the thesis leans on each.</p>
+  <p>Two of these are blocked on schema before any interface can be drawn: there is no <code>Communication</code> entity and no <code>Template</code> entity, so channel, template, delivery, read and reply are not stored per message. The follow-up engine, by contrast, is the strongest part of the build — <code>LeadFollowupPlan</code> carries all four protocols and all seven suppression conditions as real fields. Drop-in code for both entities is in <a href="implementation.html">the implementation</a>.</p>
+  <ol class="gaps">
+    <li>
+      <div>
+        <h3>Communication Composer and Template Library <code>A6 · S3</code></h3>
+        <p>The 48-hour alternating model is the centrepiece of the revised thesis. There is no template system and no send-time guard, and nothing stores which channel was last used or when — so the rotation cannot be enforced. Touches are logged after the fact rather than orchestrated.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>The seven-part remark is not enforced <code>A3</code></h3>
+        <p>The rule the rest of the thesis leans on hardest. <code>NewCall.jsx</code> validates two free-text fields, <code>feedback</code> and <code>remarks</code>, as non-empty. Evidence links, remark-quality scoring and conversion diagnosis all read from a structure that is not being captured.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Drill-Down Explorer <code>L5</code></h3>
+        <p>The nine-level drill is how every management conclusion is meant to be reached, from "conversions fell" down to "two agents did not send the package comparison creative". No drill-down code exists in the application.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Financial Counseling Desk <code>O2</code></h3>
+        <p>The thesis's own worked example turns on four of seven price objectors never receiving counseling. Nothing currently tracks counseling coverage, so that failure is invisible today.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Communication Performance <code>M9</code></h3>
+        <p>Without it there is no way to prove the 48-hour model works, or to find the channel sequence and content that precede conversions.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>15-Day Diagnostic Report <code>L6</code></h3>
+        <p>The recurring management document the entire thesis exists to produce. A trend chart exists; the diagnostic report does not.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>Supporting infrastructure <code>M8 · O4 · S2 · S5</code></h3>
+        <p>Escalation desk, recovery console, assignment rules and the audit log viewer. The underlying data is largely already captured — these surface it.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section id="ai">
+  <h2>AI layer — transcription and analysis</h2>
+  <p class="lead">Structured remarks are the hardest rule in the thesis to enforce, because they compete with call volume. An agent finishing a six-minute call does not want to fill seven fields — so remarks end up thin, or agents end up slow.</p>
+  <p>Transcription removes the trade-off. The call itself becomes the evidence, and the remark is drafted from it. The agent's job shifts from typing to confirming. Full design in <a href="ai-layer.html">the AI layer</a>.</p>
+
+  <div class="pipe">
+Call audio  <b>→</b>  consent gate<br>
+  <b>→</b>  <u>Soniox</u>     transcript · speaker labels · timestamps<br>
+    <b>→</b>  redaction   strip identifiers before egress<br>
+      <b>→</b>  <u>OpenAI</u>     extraction · classification · summary · drafting<br>
+        <b>→</b>  CRM        draft presented for agent confirmation<br>
+          <b>→</b>  audit      model · prompt version · accepted or edited
+  </div>
+
+  <div class="cols">
+    <div>
+      <h3>What it produces</h3>
+      <p>A drafted seven-part remark; the objection classified against the fixed reason taxonomy; evidence for the eleven qualification factors, each with its supporting quote; a suggested non-conversion reason with a transcript citation; remark-versus-transcript fidelity as a coaching signal; a two-line call summary for the timeline; and narrative drafting for the 15-day report from aggregated metrics.</p>
+    </div>
+    <div>
+      <h3>What it never does</h3>
+      <p>No AI output writes to a lead record unconfirmed. No AI-set status, no AI-closed lead, no AI-sent message. Reason codes come from the configured taxonomy — the model selects, it does not invent. Every extracted claim carries a timestamp; an extraction without a citation is dropped rather than shown.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Two things to settle before any code.</strong> First, there is no telephony integration in the application today — Soniox needs an audio source, and wiring a softphone or PBX is a larger piece of work than either API. Second, call recordings of patients discussing symptoms and finances are sensitive health data: recording consent changes the call opening script, and identifiers should be stripped before anything leaves the building.</p>
+  </div>
+</section>
+
+<section id="read">
+  <h2>Where to go next</h2>
+  <div class="grid">
+    <a class="s" href="thesis.html"><code>01</code>The thesis, 35 sections</a>
+    <a class="s" href="screens.html"><code>02</code>Screen index &amp; coverage</a>
+    <a class="s" href="screens-mapping.html"><code>03</code>Status against the app</a>
+    <a class="s" href="ai-layer.html"><code>04</code>AI layer design</a>
+    <a class="s" href="reference-guardrails.html"><code>05</code>Guardrails</a>
+    <a class="s" href="reference-metrics.html"><code>06</code>Metric definitions</a>
+    <a class="s" href="reference-base44-data-model.html"><code>07</code>Base44 data model</a>
+    <a class="s" href="implementation.html"><code>08</code>Drop-in code</a>
+  </div>
+</section>

@@ -1,0 +1,19 @@
+{
+  "name": "enterprise-lead-conversion-crm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Specification site for the Enterprise Lead Conversion CRM. Builds dist/ from the Markdown in docs/, screens/ and reference/.",
+  "type": "module",
+  "scripts": {
+    "build": "node site/build.mjs",
+    "dev": "node site/build.mjs --serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/charann29/enterprise-lead-conversion-crm.git"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "marked": "^15.0.12"
+  }
+}
