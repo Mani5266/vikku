@@ -62,8 +62,31 @@ const CASES = [
   [
     "/leads/lead_001?as=agent123",
     [
-      "Activity history",
-      "Next action rail",
+      "Everything that has happened",
+      "Patient details",
+      "Where it is",
+      // Specification vocabulary an agent cannot act on. "Lifecycle stage 9" is the twenty-stage
+      // ladder, "append-only" is a database property, and neither changes what they do next.
+      "!Activity history",
+      "!append-only",
+      "!Lifecycle stage",
+      "!Identity and consent",
+      // The messaging panel, in the agent's words. It used to be headed "Next action rail" and
+      // list "Message guard", "Rotation expects" and "Nurture step due" — the specification's
+      // vocabulary, on the screen an agent opens for every single lead.
+      "Messaging",
+      "Can you message now?",
+      "Send it by",
+      "What to send",
+      "Messages held back",
+      "!Next action rail",
+      "!Message guard",
+      "!Rotation expects",
+      "!Nurture step due",
+      "!a guard fired",
+      // A thesis section number is provenance for a reviewer, not an instruction for a telecaller.
+      // It is suppressed for the agent role on every screen, not screen by screen.
+      "!Thesis §",
       "Hot Lead",
       "What to do with this lead",
       "Qualify",
@@ -260,6 +283,16 @@ const CASES = [
   ],
   // O4 — §19 segments, with §20's exclusions enforced rather than described.
   ["/recovery?as=operations123", ["Recovery &amp; Reactivation Console", "Recoverable", "Long-Term Nurture", "Genuine Lost", "Still winnable"]],
+
+  // The thesis reference follows the role rather than the file. Six of the eight agent screens
+  // were still printing it after the queue and the call screen had it removed one at a time.
+  ["/leads/lead_001/qualify?as=agent123", ["Qualify Priya Sharma", "!Thesis §"]],
+  ["/leads/lead_001/plan?as=agent123", ["!Thesis §"]],
+  ["/leads/lead_001/appointment?as=agent123", ["!Thesis §"]],
+  ["/leads/lead_001/close?as=agent123", ["!Thesis §"]],
+  ["/leads/lead_001/compose?as=agent123", ["!Thesis §"]],
+  // A manager is checking this build against the specification, so they keep the citation.
+  ["/funnel?as=manager123", ["Thesis §"]],
 
   // ---- the eight screens the specification described and nobody had built ---
   // Each assertion below is the one refusal that screen exists to make. A screen that renders

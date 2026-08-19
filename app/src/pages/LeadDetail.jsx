@@ -92,17 +92,20 @@ export default function LeadDetail() {
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Identity and consent</CardTitle>
+              <CardTitle>Patient details</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
               <Field label="Phone" value={lead.phone_number} />
               <Field label="Lead type" value={lead.lead_type} />
               <Field label="Branch" value={lead.branch} />
               <Field label="Agent" value={lead.agent_name} />
-              <Field label="RCS support" value={lead.rcs_supported === false ? "No — MMS fallback" : "Yes"} />
-              <Field label="Number valid" value={lead.number_valid === false ? "No" : "Yes"} />
-              <Field label="Opted out" value={lead.opted_out ? "Yes" : "No"} />
-              <Field label="Lifecycle stage" value={`${lead.stage} — ${lead.lead_status}`} />
+              <Field label="Rich messages" value={lead.rcs_supported === false ? "No — pictures go as MMS" : "Yes"} />
+              <Field label="Number works" value={lead.number_valid === false ? "No — wrong number" : "Yes"} />
+              <Field label="Asked us to stop" value={lead.opted_out ? "Yes — do not message" : "No"} />
+              {/* Was "Lifecycle stage: 9 — Follow-up Plan Activated". The number is the
+                  specification's twenty-stage ladder and decides nothing an agent does next; the
+                  status on its own says the same thing in words. */}
+              <Field label="Where it is" value={lead.lead_status} />
             </CardContent>
           </Card>
 
@@ -134,7 +137,9 @@ export default function LeadDetail() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Activity history — append-only</CardTitle>
+              {/* "append-only" is a database property, not something an agent acts on. What it
+                  means for them is the sentence under the heading: nothing here can be edited. */}
+              <CardTitle>Everything that has happened</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {timeline.map((item) => (
@@ -182,22 +187,38 @@ export default function LeadDetail() {
             </CardContent>
           </Card>
 
+          {/* This panel used to be headed "Next action rail" and list "Message guard", "Rotation
+              expects" and "Nurture step due". Those are the specification's words for these things,
+              and the queue screen had already dropped them for being unreadable to a telecaller —
+              this is the screen they open for every single lead, so it kept the jargon in the place
+              it cost the most. Same four facts, said the way an agent would say them. */}
           <Card>
             <CardHeader>
-              <CardTitle>Next action rail</CardTitle>
+              <CardTitle>Messaging</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Field label="Message guard" value={verdict.allowed ? `Clear — ${verdict.channel}` : verdict.code.replace(/_/g, " ")} />
-              <p className="text-xs text-muted-foreground">{verdict.reason || "All guards passed."}</p>
-              <Field label="Next allowed send" value={formatDateTime(nextAllowedSendAt(communications))} />
-              <Field label="Rotation expects" value={nextChannel(communications, { rcsSupported: lead.rcs_supported !== false })} />
-              <Field label="Nurture step due" value={due.label ? `${due.step}. ${due.label}` : "sequence exhausted"} />
+              <Field
+                label="Can you message now?"
+                value={verdict.allowed ? `Yes — by ${verdict.channel}` : "Not yet"}
+              />
+              <p className="text-xs text-muted-foreground">
+                {verdict.reason || "Nothing is stopping a message to this patient."}
+              </p>
+              <Field label="Message allowed from" value={formatDateTime(nextAllowedSendAt(communications))} />
+              <Field
+                label="Send it by"
+                value={nextChannel(communications, { rcsSupported: lead.rcs_supported !== false })}
+              />
+              <Field
+                label="What to send"
+                value={due.label ? `${due.label} (step ${due.step} of 7)` : "Nothing left to send"}
+              />
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Suppressions on this lead</CardTitle>
+              <CardTitle>Messages held back</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {communications
@@ -209,7 +230,9 @@ export default function LeadDetail() {
                   </div>
                 ))}
               {communications.every((c) => !c.suppressed) && (
-                <p className="text-xs text-muted-foreground">None. A suppression here would be evidence a guard fired.</p>
+                <p className="text-xs text-muted-foreground">
+                  None. Anything held back would be listed here with the reason.
+                </p>
               )}
             </CardContent>
           </Card>
