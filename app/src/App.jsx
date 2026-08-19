@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import {
   Activity,
   BarChart3,
@@ -64,6 +64,7 @@ import AuditLog from "@/pages/AuditLog";
 import SignIn from "@/pages/SignIn";
 import NoAccess from "@/components/shared/NoAccess";
 import { useStore } from "@/store/store";
+import { useAgentDay } from "@/store/useAgentDay";
 import { useSession } from "@/store/session";
 import { canOpenScreen, homeFor, roleOf, screenForPath } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
@@ -181,7 +182,63 @@ function NavItems({ onNavigate, user }) {
           </div>
         </div>
       ))}
+      {/* The agent's day sits with the links rather than under them: `nav` is flex-1, so anything
+          rendered as a sibling gets pushed to the bottom of the sidebar with a column of empty
+          space above it. */}
+      <AgentDay onNavigate={onNavigate} />
     </nav>
+  );
+}
+
+/**
+ * The agent's day, in the sidebar.
+ *
+ * The agent group owns one nav item, because the other eight screens are all about one lead and a
+ * link to "Qualify a lead" with no lead behind it goes nowhere. That is the right answer to "why is
+ * there only one item" and the wrong answer to what the sidebar is for: it left a whole column
+ * carrying a single word.
+ *
+ * So it carries the shape of the day instead. Same five groups as the queue, same counts, from the
+ * same `buildToday` call — and each one links into its section rather than to a screen that would
+ * have to exist. It also answers the question the header only answers on one screen: how many leads
+ * are mine, visible while you are three levels deep inside a call.
+ */
+function AgentDay({ onNavigate }) {
+  const day = useAgentDay();
+  if (!day) return null;
+
+  const groups = day.groups.filter((group) => group.rows.length > 0);
+  if (groups.length === 0) return null;
+
+  return (
+    <div>
+      <p className="px-4 pb-2 text-xs font-semibold text-placeholder">Your day</p>
+      <div className="space-y-1">
+        {groups.map((group) => (
+          <Link
+            key={group.key}
+            to={`/?focus=${group.key}`}
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-md px-4 py-2 text-sm text-muted-foreground hover:bg-secondary active:bg-secondary"
+          >
+            <span
+              className={cn(
+                "h-2 w-2 shrink-0 rounded-full",
+                group.tone === "bad" ? "bg-destructive" : group.tone === "warn" ? "bg-warning" : group.tone === "good" ? "bg-success" : "bg-placeholder"
+              )}
+            />
+            <span className="flex-1 truncate">{group.label.split(" — ")[0]}</span>
+            <span className="num text-sm font-semibold text-foreground">{group.rows.length}</span>
+          </Link>
+        ))}
+      </div>
+      <p className="mt-3 border-t border-border px-4 pt-3 text-xs text-muted-foreground">
+        {`${day.rows.length} leads are yours · `}
+        <span className="font-semibold text-foreground">
+          {day.toDo === 0 ? "nothing due" : `${day.toDo} to do`}
+        </span>
+      </p>
+    </div>
   );
 }
 

@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Phone } from "lucide-react";
-import { canSendMessage } from "@/lib/communicationEngine";
-import { useStore } from "@/store/store";
 import { useSession } from "@/store/session";
-import { scopeRows } from "@/lib/rbac";
+import { useAgentDay } from "@/store/useAgentDay";
 import { GreetingHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { buildToday } from "@/lib/today";
@@ -32,15 +30,6 @@ const TONE = {
   good: "text-success",
   default: "text-foreground",
 };
-
-function useTicker(intervalMs = 15000) {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
 
 function Row({ row }) {
   const { lead, duty, said, step, overdue } = row;
@@ -100,26 +89,23 @@ function Row({ row }) {
 }
 
 export default function Today() {
-  const { leads: allLeads, interactionsFor, communicationsFor } = useStore();
   const { user } = useSession();
   const navigate = useNavigate();
-  const now = useTicker();
-  const [showFinished, setShowFinished] = useState(false);
+  const [params] = useSearchParams();
+  const day = useAgentDay();
+  const focus = params.get("focus");
+  // The sidebar links into a group rather than to a second screen. Finished is collapsed by
+  // default, so arriving at it from the sidebar has to open it or the link goes nowhere visible.
+  const [showFinished, setShowFinished] = useState(focus === "finished");
 
-  const leads = useMemo(() => scopeRows(allLeads, user), [allLeads, user]);
+  useEffect(() => {
+    if (!focus) return;
+    if (focus === "finished") setShowFinished(true);
+    const target = document.getElementById(`group-${focus}`);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focus, day]);
 
-  const day = useMemo(
-    () =>
-      buildToday({
-        leads,
-        interactionsFor,
-        communicationsFor,
-        verdictFor: (lead, communications, at) =>
-          canSendMessage({ plan: lead.plan, lead, communications, now: at }),
-        now,
-      }),
-    [leads, interactionsFor, communicationsFor, now]
-  );
+  const leads = day?.rows ?? [];
 
   const first = day.first;
 
@@ -190,7 +176,7 @@ export default function Today() {
           }
 
           return (
-            <section key={group.key}>
+            <section key={group.key} id={`group-${group.key}`} className="scroll-mt-28">
               <div className="mb-2">
                 <h2 className={cn("text-base font-semibold", TONE[group.tone])}>
                   {`${group.label} · ${group.rows.length}`}
