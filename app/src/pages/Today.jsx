@@ -48,7 +48,13 @@ function Row({ row }) {
   return (
     <li className="card-surface flex flex-wrap items-start gap-4 p-4">
       <div className="min-w-[12rem] flex-1">
-        <Link to={`/leads/${lead.id}`} className="text-sm font-semibold hover:underline">
+        {/* The patient name is how an agent opens the lead, and on a phone it was a 17px-tall
+            target — under the 24px WCAG 2.5.8 minimum and well under what a thumb can hit while
+            walking. The text size is unchanged; the tap area is padded out around it. */}
+        <Link
+          to={`/leads/${lead.id}`}
+          className="-my-1 inline-flex min-h-[2.75rem] items-center py-1 text-sm font-semibold hover:underline"
+        >
           {lead.patient_name}
         </Link>
         <p className="text-xs text-muted-foreground">
@@ -176,7 +182,7 @@ export default function Today() {
                 key={group.key}
                 type="button"
                 onClick={() => setShowFinished(true)}
-                className="text-sm font-semibold text-primary"
+                className="inline-flex min-h-[2.75rem] items-center text-sm font-semibold text-primary"
               >
                 {`Show ${group.rows.length} finished`}
               </button>
