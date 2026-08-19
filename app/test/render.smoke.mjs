@@ -150,7 +150,12 @@ const CASES = [
   [
     "/leads/lead_001/call?as=agent123",
     [
-      "Did not speak to them?",
+      // Retitled from "Did not speak to them?", and the hint now names the patient the tap will
+      // take you to. These six buttons look like the selection chips elsewhere on the screen and
+      // instead save the call and navigate, which is what made the patient name appear to change
+      // on its own.
+      "Nobody picked up?",
+      "takes you to",
       "No answer",
       "What did the patient say?",
       "Wants the surgery but has to arrange money first.",

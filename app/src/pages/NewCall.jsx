@@ -101,6 +101,8 @@ export default function NewCall() {
 
   const [connected, setConnected] = useState(true);
   const [remark, setRemark] = useState({});
+  // Which not-connected reason is waiting for a second tap, when there is typed work to lose.
+  const [confirmReason, setConfirmReason] = useState(null);
   const [temperature, setTemperature] = useState("");
   const [feedback, setFeedback] = useState("");
   const [showFullForm, setShowFullForm] = useState(false);
@@ -155,6 +157,17 @@ export default function NewCall() {
   const attemptNumber = store.interactionsFor(lead.id).length + 1;
   const complete = isRemarkComplete(remark, { connected });
   const missing = missingRemarkParts(remark);
+
+  // Has the agent put anything into this call yet? Used to decide whether the one-tap
+  // not-connected buttons are safe to fire straight away.
+  //
+  // `connected` is deliberately not part of this. It starts as true — the screen assumes the call
+  // was answered until told otherwise, which is why "Yes, we spoke" is already selected on arrival.
+  // Counting it as work would make every fresh screen look like it had a draft on it and would
+  // break the one-tap path for every agent, which is the whole point of these buttons.
+  const hasDraft =
+    Boolean(temperature) ||
+    Object.values(remark).some((value) => (typeof value === "string" ? value.trim() : value));
   // The temperature is not one of the seven remark parts, so it is appended here rather than
   // coming back from missingRemarkParts(). It has to be written in the same voice as the rest.
   const outstanding = [...missing, temperature ? null : "How interested they are"].filter(Boolean);
@@ -278,16 +291,45 @@ export default function NewCall() {
           </a>
         </div>
 
-        {/* One tap for a dial that went nowhere — the 40% of calls nobody wants to fill a form for. */}
-        <Section title="Did not speak to them?" hint="One tap saves the attempt and opens your next lead.">
+        {/* One tap for a dial that went nowhere — the 40% of calls nobody wants to fill a form for.
+            These six look like the chips everywhere else on this screen and behave nothing like
+            them: every other group here selects something, and these save the call, reschedule the
+            lead's whole follow-up plan and open a different patient. Somebody tapping what looked
+            like an option found themselves on a different person's screen with no idea why.
+            The speed is worth keeping, so the fix is to say what will happen rather than to slow
+            it down — and to stop a mis-tap throwing away typed work. */}
+        <Section
+          title="Nobody picked up?"
+          hint={
+            nextLead
+              ? `One tap records the attempt and takes you to ${nextLead.patient_name}. This lead moves onto the Not Connected retry plan.`
+              : "One tap records the attempt. This lead moves onto the Not Connected retry plan."
+          }
+        >
           <div className="flex flex-wrap gap-2">
             {NOT_CONNECTED_QUICK.map((option) => (
-              <Button key={option.reason} variant="outline" onClick={() => saveNotConnected(option.reason)}>
+              <Button
+                key={option.reason}
+                variant="outline"
+                onClick={() => {
+                  // Nothing typed yet: keep the one-tap path exactly as it was.
+                  if (!hasDraft) return saveNotConnected(option.reason);
+                  // Something typed: the second tap confirms, because saving a not-connected
+                  // attempt discards it.
+                  if (confirmReason === option.reason) return saveNotConnected(option.reason);
+                  setConfirmReason(option.reason);
+                }}
+              >
                 <PhoneOff className="h-4 w-4" />
-                {option.label}
+                {confirmReason === option.reason ? `Discard and save — ${option.label}` : option.label}
               </Button>
             ))}
           </div>
+          {confirmReason && (
+            <p className="text-xs text-destructive">
+              {`You have already typed something into this call. Saving it as "${confirmReason}" throws that away. Tap the same button again to go ahead, or carry on filling the call below.`}
+            </p>
+          )}
         </Section>
 
         <Section
@@ -295,7 +337,13 @@ export default function NewCall() {
           hint="Everything below is the record the manager reads. Tap the lines that match, speak the rest."
         >
           <div className="flex flex-wrap gap-2">
-            <Chip active={connected} onClick={() => setConnected(true)}>
+            <Chip
+              active={connected}
+              onClick={() => {
+                setConnected(true);
+                setConfirmReason(null);
+              }}
+            >
               Yes, we spoke
             </Chip>
             <span className="ml-auto flex items-center gap-2">
