@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design tokens — primitives first, then semantic names describing intent. Light only.
+
+  The palette is sampled from design/ChatGPT Image Aug 18, 2026, 07_18_44 PM.png rather than
+  guessed: the sidebar's active fill, the page tint and the chart violets were read straight off
+  the pixels of the reference board.
+
+  Rules this file encodes:
+    · one brand colour with a job (CTAs, links, active states) — #5438FA, the reference violet
+    · neutrals are opacity steps of ONE hex (#171725), never invented greys:
+        5% subtle surfaces · 12% dividers · 45% placeholders · 60% secondary text · 100% headings
+    · semantic colour only where it carries meaning: green positive, red destructive, amber pending
+    · the accent (#EFA93E) is reserved — ratings, "most booked", one highlight per screen. Never a
+      button fill: white text on it fails 4.5:1
+    · two surface treatments app-wide — white cards and one soft shadow, on a tinted page base
+      (#F8F7FD, the reference's own lavender-white). No strokes on containers. The single divider
+      value exists only inside data tables, where column alignment depends on it
+    · one radius system, one shadow recipe (blur = 2× the Y offset, 8–12% of the text black)
+    · one typeface. The reference board uses a single grotesque for words and figures alike, so
+      Inter carries both and `.num` is Inter with tabular figures rather than a second family
+*/
+
+@layer base {
+  :root {
+    /* ---- primitives ---------------------------------------------------- */
+    --ink-rgb: 23 23 37; /* #171725, the one neutral, used at opacity steps */
+
+    --brand: 249 95% 60%; /* #5438FA — sampled from the reference sidebar's active fill */
+    --brand-pressed: 250 73% 49%; /* #3F22D8 — one step darker; pressed states need it */
+    --brand-tint: 251 91% 96%; /* #EDE9FE — selected chips, banners, icon chips */
+    --accent-amber: 36 83% 59%; /* #EFA93E, reserved */
+
+    --positive: 152 58% 30%;
+    --negative: 0 70% 42%;
+    --pending: 32 88% 36%;
+
+    /* ---- semantic ------------------------------------------------------ */
+    --background: 250 60% 98%; /* #F8F7FD — the reference's lavender-white page base */
+    --foreground: 240 23% 12%; /* headings, 100% of the ink */
+    --card: 0 0% 100%;
+    --card-foreground: 240 23% 12%;
+
+    --primary: var(--brand);
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 248 32% 96%;
+    --secondary-foreground: 240 23% 12%;
+
+    --muted: 248 32% 96%;
+    --muted-foreground: 240 10% 42%; /* the 60% step, resolved so it passes 4.5:1 on white */
+
+    --accent: 248 32% 95%;
+    --accent-foreground: 240 23% 12%;
+
+    --destructive: var(--negative);
+    --destructive-foreground: 0 0% 100%;
+    --success: var(--positive);
+    --warning: var(--pending);
+
+    --border: 249 24% 92%; /* the single divider value — the 12% step on white */
+    --input: 249 24% 88%;
+    --ring: var(--brand);
+
+    --radius: 0.75rem; /* cards 12 */
+    --radius-input: 0.5rem; /* inputs 8 */
+
+    --shadow-card: 0 2px 4px rgb(var(--ink-rgb) / 0.08);
+    --shadow-raised: 0 4px 8px rgb(var(--ink-rgb) / 0.12);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* 16px base, 140% line height. */
+    @apply bg-background text-foreground antialiased;
+    font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.16);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Icons: one set, 1.5px stroke, 24px boxes at the call sites. */
+  svg.lucide {
+    stroke-width: 1.5px;
+  }
+}
+
+@layer components {
+  /* Opacity steps of the one neutral. Size plus one of these — two levers, never three.
+
+     There is deliberately no `.text-secondary` here. Tailwind generates a `text-secondary`
+     utility from the `secondary` colour token, utilities sort after components, so a class by
+     that name loses the cascade and paints near-white text on a white card. The 60% step is
+     `text-muted-foreground`, which resolves to the same value through the token. */
+  .text-placeholder {
+    color: rgb(var(--ink-rgb) / 0.45);
+  }
+
+  /* Figures: tabular, so columns align and a changing number does not reflow its row.
+     One typeface does both jobs here — the reference board sets its tables in the same
+     grotesque as its prose, and Inter's tabular figures align without a second family. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "cv05";
+  }
+
+  /* Surface treatment one: the white card. Treatment two: the shadow. No stroke. */
+  .card-surface {
+    @apply rounded-lg bg-card;
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-raised {
+    @apply rounded-lg bg-card;
+    box-shadow: var(--shadow-raised);
+  }
+
+  .scroll-slim {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--ink-rgb) / 0.18) transparent;
+  }
+
+  .scroll-slim::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  .scroll-slim::-webkit-scrollbar-thumb {
+    background: rgb(var(--ink-rgb) / 0.18);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  .scroll-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
