@@ -36,6 +36,7 @@ import Qualification from "@/pages/Qualification";
 import FollowUpPlan from "@/pages/FollowUpPlan";
 import AppointmentBooking from "@/pages/AppointmentBooking";
 import CloseLead from "@/pages/CloseLead";
+import Treatment from "@/pages/Treatment";
 import Composer from "@/pages/Composer";
 
 import TemplateLibrary from "@/pages/TemplateLibrary";
@@ -407,6 +408,7 @@ export default function App() {
             <Route path="/leads/:leadId/plan" element={guard(<FollowUpPlan />)} />
             <Route path="/leads/:leadId/appointment" element={guard(<AppointmentBooking />)} />
             <Route path="/leads/:leadId/close" element={guard(<CloseLead />)} />
+            <Route path="/leads/:leadId/treatment" element={guard(<Treatment />)} />
             <Route path="/leads/:leadId/compose" element={guard(<Composer />)} />
             <Route path="/manager" element={guard(<ManagerDashboard />)} />
             <Route path="/daily" element={guard(<DailyMonitor />)} />

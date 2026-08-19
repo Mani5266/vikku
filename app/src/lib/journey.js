@@ -14,6 +14,8 @@
 //   3  Appointment    get them in front of the doctor       (A8)
 //   4  Outcome        they came, or they closed with a reason (A9)
 
+import { isBooked, isClinicalOutcome, isStillWorking, nextTreatmentStep, treatmentState, TREATMENT_STATES } from "./treatment.js";
+
 const BOOKED_STATES = ["Booked", "Confirmation Pending", "Confirmed", "Rescheduled", "Patient Arrived"];
 
 /** Has this lead been through qualification, by any route? */
@@ -25,8 +27,25 @@ export function isClosed(lead) {
   return Boolean(lead?.closure);
 }
 
+/**
+ * Has this lead finished?
+ *
+ * This used to return true for `Consultation Completed`, which made seeing a doctor the end of the
+ * journey. It is the middle of it. A patient advised surgery and never booked was filed as
+ * converted, dropped out of every queue, and was never called again — while being the most likely
+ * lead in the system to produce revenue.
+ *
+ * Finished now means the surgery is booked, or the doctor decided no operation was needed.
+ */
 export function isConverted(lead) {
-  return lead?.appointment?.state === "Consultation Completed" || lead?.lead_status === "Converted";
+  if (lead?.lead_status === "Converted") return true;
+  if (lead?.appointment?.state !== "Consultation Completed") return false;
+  return isBooked(lead) || isClinicalOutcome(lead);
+}
+
+/** Seen by the doctor, and still owed work. Exported so the queue does not re-derive it. */
+export function needsTreatmentWork(lead) {
+  return isStillWorking(lead);
 }
 
 /**
@@ -41,6 +60,7 @@ export function leadStages(lead) {
   const booked = BOOKED_STATES.includes(appointment);
   const closed = isClosed(lead);
   const converted = isConverted(lead);
+  const treated = treatmentState(lead);
 
   const stages = [
     {
@@ -56,7 +76,16 @@ export function leadStages(lead) {
       label: "Work the plan",
       plain: "The calls and messages it schedules",
       to: `/leads/${lead?.id}/plan`,
-      state: !qualified ? "locked" : closed || converted ? "done" : booked ? "later" : "now",
+      // Once the patient has been seen the plan is done, whatever happens next. Without this the
+      // stage bar said "You are here" twice — on the plan and on the treatment — which is the one
+      // thing a progress bar must never do.
+      state: !qualified
+        ? "locked"
+        : closed || converted || appointment === "Consultation Completed"
+          ? "done"
+          : booked
+            ? "later"
+            : "now",
       detail: !qualified
         ? "Qualify first — the grade decides the plan"
         : lead.plan?.temperature
@@ -68,20 +97,50 @@ export function leadStages(lead) {
       label: "Appointment",
       plain: "Get them in front of the doctor",
       to: `/leads/${lead?.id}/appointment`,
-      state: !qualified ? "locked" : converted ? "done" : booked ? "now" : closed ? "later" : "later",
+      state: !qualified
+        ? "locked"
+        : appointment === "Consultation Completed"
+          ? "done"
+          : booked
+            ? "now"
+            : "later",
       detail: !qualified ? "Qualify first" : appointment ? appointment : "Nothing booked",
     },
     {
-      key: "outcome",
-      label: "Outcome",
-      plain: "They came, or it closes with a reason",
-      to: `/leads/${lead?.id}/close`,
-      state: converted ? "done" : closed ? "done" : "later",
-      detail: converted
-        ? "Consultation completed"
-        : closed
-          ? `Closed — ${lead.closure.reason}`
-          : "Still open",
+      // Stage four used to be "Outcome — they came, or it closes with a reason", and it went to
+      // done the moment the consultation finished. That is the middle of the funnel dressed up as
+      // the end of it. A hospital is paid for the operation, so stage four is the operation.
+      key: "treatment",
+      label: "Treatment",
+      plain: "What the doctor decided, and getting it booked",
+      to: `/leads/${lead?.id}/treatment`,
+      state: (() => {
+        if (closed) return "done";
+        if (treated === TREATMENT_STATES.BOOKED || treated === TREATMENT_STATES.CLINICAL) return "done";
+        if (treated === TREATMENT_STATES.NONE) return "later";
+        return "now";
+      })(),
+      detail: (() => {
+        if (closed) return `Closed — ${lead.closure.reason}`;
+        switch (treated) {
+          case TREATMENT_STATES.AWAITING_DECISION:
+            return "Seen by the doctor — outcome not recorded";
+          case TREATMENT_STATES.TESTS:
+            return "Waiting on reports";
+          case TREATMENT_STATES.COUNSELING_DUE:
+            return "Surgery advised — money talk owed";
+          case TREATMENT_STATES.INSURANCE_DUE:
+            return "Waiting on insurance";
+          case TREATMENT_STATES.DATE_DUE:
+            return "Needs a surgery date";
+          case TREATMENT_STATES.BOOKED:
+            return "Surgery booked";
+          case TREATMENT_STATES.CLINICAL:
+            return lead.treatment.decision;
+          default:
+            return "Not seen yet";
+        }
+      })(),
     },
   ];
 
@@ -97,13 +156,17 @@ export function leadStages(lead) {
 export function nextStep(lead, { messageAllowed = false, messageReason = null } = {}) {
   if (!lead) return null;
 
-  if (isConverted(lead)) {
-    return {
-      label: "Nothing — they saw the doctor",
-      why: "The consultation is done. Anything after this belongs to the clinical team.",
-      to: null,
-      action: null,
-    };
+  // Anything after the consultation has its own instruction, and it comes first: a patient who has
+  // been to the hospital and met a surgeon outranks every cold lead on the list.
+  const treated = treatmentState(lead);
+  if (treated !== TREATMENT_STATES.NONE && treated !== TREATMENT_STATES.CLOSED) {
+    const step = nextTreatmentStep(lead);
+    if (step) {
+      return {
+        ...step,
+        to: step.action ? `/leads/${lead.id}/treatment` : null,
+      };
+    }
   }
 
   if (isClosed(lead)) {

@@ -45,10 +45,10 @@ function owedBy(lead) {
 
 const callsOn = (id) => interactions.filter((entry) => entry.lead_id === id).length;
 
-check("thirty-six leads are added and none of them collides with the nine guard leads", () => {
-  assert.equal(leads.length, 36);
+check("forty-two leads are added and none of them collides with the nine guard leads", () => {
+  assert.equal(leads.length, 42);
   const ids = leads.map((lead) => lead.id);
-  assert.equal(new Set(ids).size, 36, "a duplicate id silently replaces a lead in the store");
+  assert.equal(new Set(ids).size, 42, "a duplicate id silently replaces a lead in the store");
   for (let i = 1; i <= 9; i++) {
     assert.ok(!ids.includes(`lead_${String(i).padStart(3, "0")}`), `lead_00${i} must stay in seed.js`);
   }
@@ -246,6 +246,47 @@ check("every lead that has been called has a message history for the composer to
       `${lead.id} has calls but no messages, so the 48-hour floor has nothing to measure from`
     );
   }
+});
+
+check("the post-consultation states are all reachable from the desk", () => {
+  // The half of the funnel that had no live workflow. Without a lead in each state the flow can be
+  // built and never seen.
+  const treated = leads.filter((lead) => lead.treatment);
+  assert.ok(treated.length >= 6, "the treatment flow needs something to work on");
+
+  const decisions = new Set(treated.map((lead) => lead.treatment.decision));
+  assert.ok(decisions.has("Surgery advised"));
+  assert.ok(decisions.has("Tests advised"));
+  assert.ok(decisions.has("Medical management"), "a clinical outcome, so the funnel can exclude it honestly");
+
+  const surgical = treated.filter((lead) => lead.treatment.decision === "Surgery advised");
+  assert.ok(surgical.some((lead) => !lead.treatment.counselingAt), "one waiting on the money talk");
+  assert.ok(
+    surgical.some((lead) => lead.treatment.counselingAt && lead.treatment.insurance === "Approval pending"),
+    "one waiting on an insurance approval"
+  );
+  assert.ok(
+    surgical.some((lead) => lead.treatment.counselingAt && !lead.treatment.surgeryDate && lead.treatment.insurance === "Not using insurance"),
+    "one needing only a date"
+  );
+  assert.ok(surgical.some((lead) => lead.treatment.surgeryBookedAt), "and one that got there");
+
+  // Every surgical row carries a quote, because the money conversation cannot start without one.
+  for (const lead of surgical) {
+    assert.ok(Number(lead.treatment.quotedPackage) > 0, `${lead.id} advises surgery with no quoted package`);
+  }
+  // Every logged money talk carries a real timestamp and a note somebody can read.
+  for (const lead of treated.filter((entry) => entry.treatment.counselingAt)) {
+    assert.ok(!Number.isNaN(Date.parse(lead.treatment.counselingAt)), `${lead.id} has an unreadable counselling time`);
+    assert.ok((lead.treatment.counselingNote || "").length > 20, `${lead.id} logged a money talk with no substance`);
+  }
+});
+
+check("a lead seen by the doctor with no outcome recorded exists, because that is the real gap", () => {
+  const undecided = leads.filter(
+    (lead) => lead.appointment?.state === "Consultation Completed" && !lead.treatment
+  );
+  assert.ok(undecided.length >= 1, "somebody has always been seen and never written up");
 });
 
 check("every row says what it is there to demonstrate", () => {

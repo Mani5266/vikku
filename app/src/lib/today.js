@@ -1,5 +1,5 @@
 import { dutiesFor } from "@/lib/touchTime";
-import { isClosed, isConverted, nextStep } from "@/lib/journey";
+import { isClosed, isConverted, needsTreatmentWork, nextStep } from "@/lib/journey";
 import { lastWord } from "@/lib/agentCopy";
 
 // The agent's day, in four buckets and one order.
@@ -22,6 +22,12 @@ import { lastWord } from "@/lib/agentCopy";
 // own screens show, so the queue and the lead never disagree about what to do.
 
 export const BUCKETS = [
+  {
+    key: "after-consultation",
+    label: "Seen the doctor — finish the job",
+    why: "These patients came to the hospital and met a surgeon. They cost more to get here than anybody else on this list and they are the closest to a decision. Until this year they dropped off the queue the moment the consultation ended.",
+    tone: "bad",
+  },
   {
     key: "ring-now",
     label: "Ring now",
@@ -57,6 +63,11 @@ export const BUCKETS = [
 /** Which bucket a lead belongs in. First match wins, so the worst state always shows. */
 function bucketFor({ lead, task }) {
   if (isConverted(lead) || isClosed(lead)) return "finished";
+  // Seen by the doctor and still owed work outranks everything else on the list. These patients
+  // came to the hospital, so they cost more to acquire than anybody else in the queue and are the
+  // closest to producing revenue. Before this, the consultation ended the journey and they were
+  // filed under Finished — which is how a lead that had already said yes went quiet.
+  if (needsTreatmentWork(lead)) return "after-consultation";
   if (lead.appointment?.state && ["Booked", "Confirmation Pending", "Confirmed", "Patient Arrived"].includes(lead.appointment.state)) {
     return "finished";
   }

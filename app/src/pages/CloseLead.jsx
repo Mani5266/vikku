@@ -13,6 +13,7 @@ import { useSession } from "@/store/session";
 import { canOpenLead } from "@/lib/rbac";
 import { NON_CONVERSION_CATEGORIES, getReasonsForCategory, reasonDefaults } from "@/lib/reasonTaxonomy";
 import { MIN_DETAIL, OWNERS, closureProblems, evidenceOptions, segmentFor } from "@/lib/closure";
+import { closureProblems as treatmentClosureProblems } from "@/lib/treatment";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -59,8 +60,17 @@ export default function CloseLead() {
   }, [lead, interactionsFor, communicationsFor]);
 
   const problems = useMemo(
-    () => closureProblems(draft, { evidenceIds: evidence.map((option) => option.id) }),
-    [draft, evidence]
+    () => [
+      ...closureProblems(draft, { evidenceIds: evidence.map((option) => option.id) }),
+      // §33's guard, on the lead rather than on a report. The desk in operations already refuses
+      // this, but the mistake is made here: an agent closes a patient who was advised surgery and
+      // never counseled, and reaches for "treatment cost high" because that is what the patient
+      // said on the phone. The patient did say it. Nobody knows whether it was true, because
+      // nobody ever told them what it costs after insurance and EMI — and the MD reads the result
+      // as "our packages are too expensive".
+      ...treatmentClosureProblems(lead, draft.reason),
+    ],
+    [draft, evidence, lead]
   );
 
   if (!lead) return <NoAccess screen="A9" />;

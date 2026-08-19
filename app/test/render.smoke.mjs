@@ -92,7 +92,8 @@ const CASES = [
       "Qualify",
       "Work the plan",
       "Appointment",
-      "Outcome",
+      // Stage four was "Outcome" and completed at the consultation. It is the operation now.
+      "Treatment",
       "Next step",
       "You are here",
     ],
@@ -304,6 +305,38 @@ const CASES = [
   ["/leads/lead_001/compose?as=agent123", ["!Thesis §"]],
   // A manager is checking this build against the specification, so they keep the citation.
   ["/funnel?as=manager123", ["Thesis §"]],
+
+  // A10 — the half of the funnel that ran off the end of the product. A patient seen by the doctor
+  // and advised surgery used to be marked converted and filed under Finished.
+  [
+    "/leads/lead_046/treatment?as=agent123",
+    [
+      "After the consultation — Shankar Naik",
+      "What did the doctor decide?",
+      "Surgery advised",
+      "Medical management",
+      "Not a lost lead",
+      "What stands between here and the operation",
+      "Money talk done",
+      "The money talk",
+      "Book the money talk",
+      "!Nothing — they saw the doctor",
+    ],
+  ],
+  // The queue puts these above everything else, and says why.
+  [
+    "/?as=agent123",
+    [
+      "Seen the doctor — finish the job",
+      "Shankar Naik",
+      "closest to a decision",
+      "!Nothing — they saw the doctor",
+    ],
+  ],
+  // A booked surgery is the one post-consultation state that is genuinely finished.
+  ["/leads/lead_051/treatment?as=agent123", ["After the consultation — Kamala Reddy", "Surgery booked"]],
+  // Somebody else's lead is still somebody else's.
+  ["/leads/lead_047/treatment?as=agent123", ["This screen belongs to another role", "!What stands between here and the operation"]],
 
   // ---- the eight screens the specification described and nobody had built ---
   // Each assertion below is the one refusal that screen exists to make. A screen that renders

@@ -290,6 +290,70 @@ const ROWS = [
     shows: "The honest end of the Not Connected plan — five attempts logged, then closed as unreachable rather than as uninterested.",
   },
 
+  // ---- Seen the doctor, and the money conversation is what is left --------------------------
+  // The half of the funnel that had no live workflow until now. Every one of these was previously
+  // filed as Finished the moment the consultation ended.
+  {
+    id: "lead_046", name: "Shankar Naik", phone: "+91 98451 66204", disease: "Knee Replacement",
+    source: "Google Ads", campaign: "Ortho — Whitefield — Aug", branch: "Jayanagar", agent: "Nikhil Rao",
+    temperature: "Hot", day: 7, ageHours: 190, calls: 4,
+    appointment: { state: "Consultation Completed", doctor: "Dr. Suhas Deshpande", consultationType: "In-person", atHours: 30 },
+    said: "Came in with his son, doctor advised a full knee replacement.",
+    explained: "Told him the counsellor would call about the package and the EMI options.",
+    treatment: { decision: "Surgery advised", quotedPackage: 245000 },
+    shows: "Seen the doctor, surgery advised, nobody has had the money talk. The single most expensive lead to lose, and the one §33 was written about.",
+  },
+  {
+    id: "lead_047", name: "Fatima Begum", phone: "+91 99643 20871", disease: "Gallstones",
+    source: "Meta Ads", campaign: "General Surgery — Aug", branch: "Whitefield", agent: "Sneha Pillai",
+    temperature: "Hot", day: 7, ageHours: 210, calls: 4,
+    appointment: { state: "Consultation Completed", doctor: "Dr. Kavitha Rao", consultationType: "In-person", atHours: 54 },
+    said: "Doctor advised surgery, she has insurance through her husband's employer.",
+    explained: "Explained the package and started the insurance eligibility check.",
+    treatment: { decision: "Surgery advised", quotedPackage: 96000, counselingAt: true, counselingNote: "Explained the package, the two-day stay and the EMI bands. She is claiming through her husband's employer policy.", insurance: "Approval pending" },
+    shows: "Money talk done, waiting on an insurance approval nobody is chasing. Reads afterwards as a price objection if it goes quiet.",
+  },
+  {
+    id: "lead_048", name: "Devi Prasad", phone: "+91 90083 41726", disease: "Piles",
+    source: "YouTube", campaign: "Explainer — Piles", branch: "Jayanagar", agent: "Nikhil Rao",
+    temperature: "Hot", day: 5, ageHours: 160, calls: 3,
+    appointment: { state: "Consultation Completed", doctor: "Dr. Anand Kulkarni", consultationType: "In-person", atHours: 40 },
+    said: "Ready to go ahead, asked what dates are open next month.",
+    explained: "Went through the package and confirmed insurance is not being used.",
+    treatment: { decision: "Surgery advised", quotedPackage: 68000, counselingAt: true, counselingNote: "Package explained in full, no insurance, paying himself. Comfortable with the amount.", insurance: "Not using insurance" },
+    shows: "Everything settled except a date. The last step, and the one where a patient who already said yes quietly drifts.",
+  },
+  {
+    id: "lead_049", name: "Sarala Devi", phone: "+91 97416 55039", disease: "Thyroid",
+    source: "Website", campaign: "Organic — Website", branch: "Whitefield", agent: "Sneha Pillai",
+    temperature: "Warm", day: 9, ageHours: 240, calls: 3,
+    appointment: { state: "Consultation Completed", doctor: "Dr. Kavitha Rao", consultationType: "In-person", atHours: 62 },
+    said: "Doctor put her on medication and wants to review in three months.",
+    explained: "Explained the review schedule and that no operation is needed.",
+    treatment: { decision: "Medical management" },
+    shows: "Treated without surgery. A finished clinical outcome, not a lost lead — counting it as one is how a changing case mix reads as a falling conversion rate.",
+  },
+  {
+    id: "lead_050", name: "Irfan Ahmed", phone: "+91 91087 30264", disease: "Varicose Veins",
+    source: "Meta Ads", campaign: "General Surgery — Aug", branch: "Jayanagar", agent: "Nikhil Rao",
+    temperature: "Warm", day: 7, ageHours: 176, calls: 3,
+    appointment: { state: "Consultation Completed", doctor: "Dr. Imran Qureshi", consultationType: "In-person", atHours: 20 },
+    said: "Doctor asked for a doppler scan before deciding anything.",
+    explained: "Explained what the scan is for and where to get it done.",
+    treatment: { decision: "Tests advised", testsNote: "Venous doppler of both legs. Getting it done at a lab near home this week." },
+    shows: "Waiting on reports. Not a decision yet, and a lead that goes quiet here is lost without anybody recording a reason.",
+  },
+  {
+    id: "lead_051", name: "Kamala Reddy", phone: "+91 98868 12093", disease: "Cataract",
+    source: "Referral", campaign: "Doctor referral", branch: "Jayanagar", agent: "Nikhil Rao",
+    temperature: "Hot", day: 7, ageHours: 200, calls: 4,
+    appointment: { state: "Consultation Completed", doctor: "Dr. Leela Krishnan", consultationType: "In-person", atHours: 72 },
+    said: "Surgery done and discharged the same day.",
+    explained: "Booked the date on the call and handed her to admissions.",
+    treatment: { decision: "Surgery advised", quotedPackage: 48000, counselingAt: true, counselingNote: "Package explained, day-care discharge, paying herself.", insurance: "Not using insurance", surgeryDate: "2026-08-26", surgeryBookedAt: true },
+    shows: "Booked. What every row above is trying to become, and the only state on this screen that is genuinely finished.",
+  },
+
   // ---- Arjun Verma, so the manager screens hold four agents rather than two ---------------
   {
     id: "lead_037", name: "Suresh Babu", phone: "+91 98866 40129", disease: "Knee Replacement",
@@ -419,6 +483,20 @@ export function buildExtras(now = new Date()) {
         ...(row.closure ? { closed: true } : {}),
       },
     };
+
+    if (row.treatment) {
+      // The rows above write `true` for the timestamp fields because a boolean reads as intent and
+      // a hand-typed ISO string reads as noise. They become real times here, relative to the same
+      // clock as everything else in the seed.
+      const stamp = (offsetHours) => hoursBefore(Math.max(0.5, row.ageHours - offsetHours), now);
+      lead.treatment = {
+        ...row.treatment,
+        counselingAt: row.treatment.counselingAt ? stamp(row.day * 24 - 12) : null,
+        surgeryBookedAt: row.treatment.surgeryBookedAt ? stamp(row.day * 24 - 6) : null,
+        updated_by: row.agent,
+        updated_at: created,
+      };
+    }
 
     if (row.appointment) {
       const at = hoursBefore(row.appointment.atHours, now);

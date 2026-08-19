@@ -329,7 +329,10 @@ check("the ten §13 Day-15 outcomes are all here, and each says where it goes", 
 check("a brand-new lead starts at Qualify and nothing downstream is open", () => {
   const fresh = { id: "lead_x" };
   const stages = journey.leadStages(fresh);
-  assert.deepEqual(stages.map((s) => s.key), ["qualify", "plan", "appointment", "outcome"]);
+  // Stage four was "outcome" — "they came, or it closes with a reason" — and it completed the
+  // moment the consultation finished. A hospital is paid for the operation, so it is the
+  // operation. Still four stages; the last one changed meaning rather than multiplying.
+  assert.deepEqual(stages.map((s) => s.key), ["qualify", "plan", "appointment", "treatment"]);
   assert.equal(stages[0].state, "now");
   assert.equal(stages[1].state, "locked", "a plan before a grade is a schedule nobody chose");
   assert.equal(stages[2].state, "locked");
@@ -384,8 +387,33 @@ check("a closed or converted lead is told to do nothing, with the reason", () =>
   assert.equal(closed.to, null, "a closed lead must not carry an action button");
   assert.match(closed.why, /EMI required/);
 
-  const converted = journey.nextStep({ id: "l", appointment: { state: "Consultation Completed" } });
-  assert.equal(converted.to, null);
+  // This assertion used to read `nextStep({appointment: "Consultation Completed"}).to === null`,
+  // which is the defect written down as a rule: a patient who had been to the hospital and met a
+  // surgeon was told there was nothing to do. Seeing a doctor is the middle of the funnel. Now
+  // only a booked surgery or a doctor deciding against one finishes a lead.
+  const seenOnly = journey.nextStep({ id: "l", appointment: { state: "Consultation Completed" } });
+  assert.match(seenOnly.to, /\/treatment$/, "the outcome still has to be recorded");
+
+  const booked = journey.nextStep({
+    id: "l",
+    appointment: { state: "Consultation Completed" },
+    treatment: {
+      decision: "Surgery advised",
+      quotedPackage: 200000,
+      counselingAt: "x",
+      insurance: "Approved",
+      surgeryDate: "2026-09-01",
+      surgeryBookedAt: "y",
+    },
+  });
+  assert.equal(booked.to, null, "a booked surgery is genuinely finished");
+
+  const clinical = journey.nextStep({
+    id: "l",
+    appointment: { state: "Consultation Completed" },
+    treatment: { decision: "Medical management" },
+  });
+  assert.equal(clinical.to, null, "treated without surgery is finished too, and is not a loss");
 });
 
 check("the message step is offered only when the guard allows it, and says why when it does not", () => {
