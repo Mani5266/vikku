@@ -6,17 +6,42 @@ import { buildSeed } from "@/store/seed";
 // `import { Communication } from "@/api/entities"` is a per-call change,
 // not a restructure.
 
-const STORAGE_KEY = "elc-crm-state-v3";
+const STORAGE_KEY = "elc-crm-state";
 const StoreContext = createContext(null);
+
+/**
+ * Bump this whenever `buildSeed()` changes shape or content.
+ *
+ * The version is stored inside the saved state and checked on load, rather than being baked into
+ * the storage key. Both approaches force a rebuild; only this one leaves a trace of *why* the
+ * rebuild happened, and only this one fails loudly in review — a key rename reads as a typo, a
+ * version constant reads as a decision.
+ *
+ * This exists because it was already gone wrong once. The seed grew from 9 leads to 45 and the key
+ * was left alone, so anybody who had opened the app before that change kept the old nine forever:
+ * their queue said "5 leads are yours" while a fresh browser said 23, and nothing on screen
+ * explained the difference. A seed that only reaches new visitors is not a seed.
+ */
+export const SEED_VERSION = 4;
 
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      // A saved session from an older seed is discarded rather than migrated. This is demo data:
+      // rebuilding costs nothing and merging two seed generations would produce a dataset that
+      // matches neither, which is worse than starting again.
+      if (saved?.seedVersion === SEED_VERSION) return saved;
+    }
   } catch {
     // corrupted or unavailable storage falls back to a fresh seed
   }
-  return buildSeed();
+  return freshSeed();
+}
+
+function freshSeed() {
+  return { ...buildSeed(), seedVersion: SEED_VERSION };
 }
 
 let sequence = 0;
@@ -200,7 +225,7 @@ export function StoreProvider({ children }) {
     [audit]
   );
 
-  const reset = useCallback(() => setState(buildSeed()), []);
+  const reset = useCallback(() => setState(freshSeed()), []);
 
   const value = useMemo(
     () => ({
