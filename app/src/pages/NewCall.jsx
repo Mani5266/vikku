@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronDown, Mic, MicOff, PhoneCall, PhoneOff, Save, Sparkles } from "lucide-react";
+import { ChevronDown, Mic, MicOff, PhoneCall, PhoneOff, Save, Timer } from "lucide-react";
 import StructuredRemark, { isRemarkComplete, missingRemarkParts } from "@/components/shared/StructuredRemark";
 import { useStore } from "@/store/store";
 import { useSession } from "@/store/session";
@@ -71,16 +71,24 @@ function Section({ title, hint, children }) {
   );
 }
 
-const AI_DRAFT = {
-  patientSaid:
-    "Says the pain has worsened over the last two weeks and she is ready for surgery, but wants to confirm insurance cover first.",
-  agentExplained:
-    "Explained the day-care procedure, the two-week recovery window, and that we would run an insurance eligibility check today.",
-  objectionCategory: "Financial",
-  objectionRaised: "Insurance unavailable",
-  materialShared: "Financial Support — insurance and EMI",
-  nextAction: "Financial Counseling",
-};
+// There was a constant here called AI_DRAFT and a button labelled "Fill from the recording", and
+// both have been removed rather than relabelled.
+//
+// Nothing in this build records or transcribes a call — that is the AI layer, and docs/AI-LAYER.md
+// says plainly that it is not built. The button wrote a fixed paragraph into the remark: "the pain
+// has worsened over the last two weeks and she is ready for surgery". The same sentence, on every
+// lead. It appeared on Ramesh Kumar, a man booked for a knee replacement.
+//
+// That is not a rough edge, it is the failure this product exists to remove. The client's own
+// complaint was three identical remarks copy-pasted in a row, and every dashboard downstream reads
+// these fields. A one-tap control that writes a plausible sentence nobody said industrialises the
+// exact thing the seven-part remark was designed to stop.
+//
+// It also told a hospital that calls are being recorded. They are not, and saying so on screen is
+// a claim about consent that no demo should make on the hospital's behalf.
+//
+// When Soniox is wired in, the honest version of this control reads back what the patient actually
+// said and the agent confirms it. Until then there is nothing to fill from.
 
 export default function NewCall() {
   const { leadId } = useParams();
@@ -95,18 +103,28 @@ export default function NewCall() {
   const [remark, setRemark] = useState({});
   const [temperature, setTemperature] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [suggested, setSuggested] = useState(null);
   const [showFullForm, setShowFullForm] = useState(false);
   const [dictationLang, setDictationLang] = useState("en-IN");
   const [phraseGroup, setPhraseGroup] = useState(PATIENT_PHRASES[0].group);
+  // The duration field used to be something the agent guessed and typed, so a stopwatch earns its
+  // place. What it must not do is start on its own.
+  //
+  // It previously began counting the moment the screen opened and sat in the top-right corner of
+  // the header reading "00:07 on this call" — the exact position and behaviour of a recording
+  // indicator in every application anybody has used. In a hospital that is not a cosmetic
+  // misreading: it says calls are being recorded, which is a claim about patient consent, and
+  // nothing here records anything. It was also wrong, counting time spent reading the screen
+  // before the agent had dialled.
+  //
+  // It now starts when they tap the dial button and shows nothing before that.
+  const [dialledAt, setDialledAt] = useState(null);
   const [seconds, setSeconds] = useState(0);
-  const startedAt = useRef(Date.now());
 
-  // A timer, because "call duration (seconds)" was a field the agent had to guess and type.
   useEffect(() => {
-    const id = setInterval(() => setSeconds(Math.round((Date.now() - startedAt.current) / 1000)), 1000);
+    if (!dialledAt) return undefined;
+    const id = setInterval(() => setSeconds(Math.round((Date.now() - dialledAt) / 1000)), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [dialledAt]);
 
   const patientDictation = useDictation({
     lang: dictationLang,
@@ -137,6 +155,9 @@ export default function NewCall() {
   const attemptNumber = store.interactionsFor(lead.id).length + 1;
   const complete = isRemarkComplete(remark, { connected });
   const missing = missingRemarkParts(remark);
+  // The temperature is not one of the seven remark parts, so it is appended here rather than
+  // coming back from missingRemarkParts(). It has to be written in the same voice as the rest.
+  const outstanding = [...missing, temperature ? null : "How interested they are"].filter(Boolean);
 
   const applyTemperature = () => {
     if (!temperature || temperature === lead.plan?.temperature) return;
@@ -172,7 +193,7 @@ export default function NewCall() {
 
   const saveConnected = (andNext) => {
     if (!complete) {
-      toast({ title: `Still needed: ${missing.join(", ")}`, variant: "destructive" });
+      toast({ title: `Still needed: ${outstanding.join(", ")}`, variant: "destructive" });
       return;
     }
     if (!temperature) {
@@ -195,7 +216,10 @@ export default function NewCall() {
       material_shared: remark.materialShared,
       next_action: remark.nextAction,
       next_action_at: remark.nextActionAt,
-      evidence_ref: suggested ? "transcript@00:04:12" : undefined,
+      // evidence_ref stays empty until something real can fill it. It used to be written as
+      // "transcript@00:04:12" whenever the removed draft button had been pressed — a citation
+      // pointing into a transcript that was never recorded. §29 wants evidence that can be opened.
+      evidence_ref: undefined,
     });
     applyTemperature();
 
@@ -217,9 +241,15 @@ export default function NewCall() {
         subtitle="Tap what happened. Type only what the taps do not cover."
         back={{ to: `/leads/${lead.id}`, label: "Back to lead" }}
         actions={
-          <span className="num text-sm text-muted-foreground">
-            {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")} on this call
-          </span>
+          dialledAt ? (
+            <span className="inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2">
+              <Timer className="h-4 w-4 text-muted-foreground" />
+              <span className="num text-sm font-medium">
+                {`${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`}
+              </span>
+              <span className="text-xs text-muted-foreground">since you dialled</span>
+            </span>
+          ) : null
         }
       />
 
@@ -240,6 +270,7 @@ export default function NewCall() {
           </div>
           <a
             href={telHref(lead.phone_number)}
+            onClick={() => setDialledAt((at) => at ?? Date.now())}
             className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-card active:bg-primary-pressed"
           >
             <PhoneCall className="h-6 w-6" />
@@ -267,17 +298,6 @@ export default function NewCall() {
             <Chip active={connected} onClick={() => setConnected(true)}>
               Yes, we spoke
             </Chip>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSuggested(AI_DRAFT);
-                setRemark((r) => ({ ...AI_DRAFT, ...r }));
-              }}
-            >
-              <Sparkles className="h-4 w-4" />
-              Fill from the recording
-            </Button>
             <span className="ml-auto flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Speak in</span>
               {DICTATION_LANGUAGES.map((option) => (
@@ -413,7 +433,7 @@ export default function NewCall() {
         {/* Temperature, on the same screen as the call, with the promise attached. */}
         <Section
           title="How interested are they?"
-          hint="This decides the calls that land on your list. Pick honestly — the recording is checked against it."
+          hint="This decides the calls that land on your list. Pick honestly — your manager sees the grade next to what actually happened."
         >
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {TEMPERATURE_CHOICES.map((choice) => (
@@ -453,7 +473,7 @@ export default function NewCall() {
           </button>
           {showFullForm && (
             <div className="mt-4">
-              <StructuredRemark value={remark} onChange={setRemark} connected={connected} suggested={suggested} />
+              <StructuredRemark value={remark} onChange={setRemark} connected={connected} suggested={null} />
               <Textarea
                 className="mt-4"
                 rows={2}
@@ -465,23 +485,35 @@ export default function NewCall() {
           )}
         </div>
 
-        {/* Save. Two ways out, and the missing pieces named before the tap, not after. */}
-        <div className="card-surface flex flex-wrap items-center gap-4 p-4">
-          <Button onClick={() => saveConnected(true)} disabled={!complete || !temperature}>
-            <Save className="h-6 w-6" />
-            {nextLead ? `Save and call ${nextLead.patient_name}` : "Save"}
-          </Button>
-          <Button variant="outline" onClick={() => saveConnected(false)} disabled={!complete || !temperature}>
-            Save and stay here
-          </Button>
-          {(!complete || !temperature) && (
-            <p className="text-xs text-muted-foreground">
-              Still needed:{" "}
-              {[...missing, temperature ? null : "how interested they are"].filter(Boolean).join(", ")}
-            </p>
-          )}
-          {complete && temperature && (
-            <Badge variant="success">Ready to save</Badge>
+        {/* Save. Two ways out, and the missing pieces named before the tap, not after.
+            The outstanding items used to run together as one grey comma-separated sentence beside
+            the buttons — "What the patient said, What you explained, Next action, When it must
+            happen, how interested they are" — which is hard to scan and mixes capitalisation,
+            because the last item was appended here while the rest come from the shipped
+            missingRemarkParts(). They are one chip each now, and the appended item matches. */}
+        <div className="card-surface space-y-3 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={() => saveConnected(true)} disabled={!complete || !temperature}>
+              <Save className="h-6 w-6" />
+              {nextLead ? `Save and call ${nextLead.patient_name}` : "Save"}
+            </Button>
+            <Button variant="outline" onClick={() => saveConnected(false)} disabled={!complete || !temperature}>
+              Save and stay here
+            </Button>
+            {complete && temperature && <Badge variant="success">Ready to save</Badge>}
+          </div>
+          {outstanding.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Still needed</span>
+              {outstanding.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </div>

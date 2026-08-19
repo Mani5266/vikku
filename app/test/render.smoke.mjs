@@ -157,7 +157,13 @@ const CASES = [
       "How interested are they?",
       "Puts 3 calls and 3 messages on your list over 5 days.",
       "Tomorrow morning",
-      "Still needed:",
+      // The outstanding parts are one chip each now rather than a comma-separated run-on beside
+      // the buttons, so the label and the items are asserted separately. "How interested they are"
+      // is appended by the screen rather than by the shipped missingRemarkParts(), and it used to
+      // be the one item in lower case.
+      "Still needed",
+      "What the patient said",
+      "How interested they are",
       "Full form — all seven parts",
       "!Structured remark (seven parts)",
       "!Sub-reason",

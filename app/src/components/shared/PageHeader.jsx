@@ -20,22 +20,25 @@ export default function PageHeader({ screen, title, subtitle, thesis, back, acti
   const { user } = useSession();
   const showThesis = user?.role !== "agent";
   return (
-    <header className="sticky top-0 z-30 bg-card px-4 py-4 shadow-card">
+    <header className="sticky top-0 z-30 bg-card px-4 py-5 shadow-card md:px-6 md:py-6">
       {back && (
         <Link
           to={back.to}
-          className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground"
+          className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
           {back.label}
         </Link>
       )}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      {/* Actions sit centred against the title block rather than pinned to the top. Top-aligned,
+          a single control floated to the far-right corner of a bar reads as a status indicator
+          rather than as part of this screen. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           {/* The screen code is not rendered. "A6" is the specification's name for a thing,
               not a step in anybody's day, and putting it on screen made the product read as a
               spec dump. The prop is still accepted so call sites and tests keep working. */}
-          <h1 className="truncate text-lg font-semibold">{title}</h1>
+          <h1 className="truncate text-lg font-semibold md:text-xl">{title}</h1>
           {subtitle && <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{subtitle}</p>}
           {/* One template literal, not `Thesis {thesis}`. JSX splits that into two text nodes, so
               a server-rendered assertion for "Thesis §" never matches — which quietly makes a
@@ -67,10 +70,10 @@ export function GreetingHeader({ name, screen, purpose, meta }) {
   const first = (name ?? "").split(" ")[0];
 
   return (
-    <header className="sticky top-0 z-30 bg-card px-4 py-4 shadow-card">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <header className="sticky top-0 z-30 bg-card px-4 py-5 shadow-card md:px-6 md:py-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold">
+          <h1 className="truncate text-xl font-semibold md:text-2xl">
             {part}
             {first ? `, ${first}` : ""}
           </h1>

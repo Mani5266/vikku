@@ -33,8 +33,13 @@ export default function LeadJourney({ lead, current }) {
   if (!lead) return null;
   const stages = leadStages(lead);
 
+  // The stage bar used to carry `bg-card`, directly below a `bg-card` header that has a drop
+  // shadow. The two read as a single white panel with a shadow drawn across the middle of it —
+  // the kind of seam that makes a screen look unfinished without anybody being able to say why.
+  // It now sits on the page background as its own band, so the header's shadow lands where a
+  // header's shadow should.
   return (
-    <nav aria-label="Lead stages" className="bg-card px-4 pb-4">
+    <nav aria-label="Lead stages" className="px-4 py-4 md:px-6">
       <ol className="flex flex-wrap items-stretch gap-2">
         {stages.map((stage, index) => {
           const active = stage.key === current;
