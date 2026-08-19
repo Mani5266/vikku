@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
+import { useSession } from "@/store/session";
 
 // The nav bar: fixed height, 16px edge padding, white surface with the app's one shadow, no
 // stroke. Two hierarchy levers on the title block — size for the heading, the 60% opacity
@@ -8,6 +9,16 @@ import { ChevronLeft } from "lucide-react";
 
 export default function PageHeader({ screen, title, subtitle, thesis, back, actions }) {
   void screen; // accepted, deliberately not rendered — see the note below
+  // A thesis section number is provenance: it tells whoever is checking this build against the
+  // specification where a screen's rules came from. That reader is a manager, an analyst or a
+  // reviewer. It is not the telecaller, who cannot act on "§17, §30.6" at their ninetieth call and
+  // for whom it is one more line of noise above the thing they came to do.
+  //
+  // The reference was already stripped from the queue and the call screen for exactly that reason.
+  // Doing it per screen left the other six agent screens carrying it, so the decision now lives in
+  // one place and follows the role rather than the file.
+  const { user } = useSession();
+  const showThesis = user?.role !== "agent";
   return (
     <header className="sticky top-0 z-30 bg-card px-4 py-4 shadow-card">
       {back && (
@@ -26,7 +37,12 @@ export default function PageHeader({ screen, title, subtitle, thesis, back, acti
               spec dump. The prop is still accepted so call sites and tests keep working. */}
           <h1 className="truncate text-lg font-semibold">{title}</h1>
           {subtitle && <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{subtitle}</p>}
-          {thesis && <p className="mt-1 text-xs text-placeholder">Thesis {thesis}</p>}
+          {/* One template literal, not `Thesis {thesis}`. JSX splits that into two text nodes, so
+              a server-rendered assertion for "Thesis §" never matches — which quietly makes a
+              negative assertion pass whether the text is there or not. */}
+          {thesis && showThesis && (
+            <p className="mt-1 text-xs text-placeholder">{`Thesis ${thesis}`}</p>
+          )}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
