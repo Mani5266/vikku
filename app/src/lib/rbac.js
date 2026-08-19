@@ -22,7 +22,7 @@ export const ROLES = {
     key: "agent",
     label: "Agent",
     description: "Works a lead queue: calls, remarks, messages, the day's scheduled follow-ups.",
-    screens: ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
+    screens: ["A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
     home: "/",
     scope: "own", // only leads assigned to this user
   },
@@ -30,7 +30,7 @@ export const ROLES = {
     key: "manager",
     label: "Manager",
     description: "Monitors the team: funnel, response clock, follow-up compliance, qualification audit.",
-    screens: ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "O1", "O2"],
+    screens: ["A0", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "O1", "O2"],
     home: "/manager",
     scope: "team", // every lead, every agent
   },
@@ -54,7 +54,7 @@ export const ROLES = {
     key: "admin",
     label: "Administration",
     description: "Owns lead sources, templates, approvals and the audit trail.",
-    screens: ["S1", "S3", "S5"],
+    screens: ["A0", "S1", "S3", "S5"],
     home: "/templates",
     scope: "all",
   },
@@ -103,6 +103,7 @@ export function roleOf(user) {
  * shows its own spec numbering reads as a document rather than a tool.
  */
 export const SCREEN_NAMES = {
+  A0: "Add a lead",
   A1: "My Leads",
   A2: "Lead detail",
   A3: "Log a call",
@@ -141,6 +142,7 @@ export const SCREEN_NAMES = {
 export const ROUTE_SCREENS = [
   { path: "/", screen: "A1", exact: true },
   { path: "/tasks", screen: "A7" },
+  { path: "/intake", screen: "A0" },
   // Everything about one lead lives under /leads/:id. The suffix picks the screen, because the
   // lead id sits in the middle of the path and a prefix match cannot see past it.
   { path: "/leads", screen: "A2" },

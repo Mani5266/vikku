@@ -168,6 +168,38 @@ export function StoreProvider({ children }) {
     [audit]
   );
 
+  /**
+   * Put a lead into the system.
+   *
+   * The store had `updateLead` and nothing that created one, so every lead in the product existed
+   * because the seed invented it. This is the funnel's mouth: it appends rather than replaces, and
+   * it takes records that the §3.1 guard in lib/intake.js has already passed — the guard lives at
+   * the write layer rather than on a form, because a check on a form is a check a spreadsheet
+   * import walks straight past.
+   */
+  const addLeads = useCallback((records) => {
+    const incoming = Array.isArray(records) ? records : [records];
+    if (!incoming.length) return [];
+    const stamped = incoming.map((record) => ({ ...record, id: record.id ?? newId("lead") }));
+    setState((s) => ({
+      ...s,
+      // Newest first: a lead that just arrived is the one somebody has five minutes to call.
+      leads: [...stamped, ...s.leads],
+      audit: [
+        ...stamped.map((record) => ({
+          id: newId("audit"),
+          at: new Date().toISOString(),
+          action: "LEAD_CREATED",
+          entity: "Lead",
+          entity_id: record.id,
+          detail: `${record.patient_name} · ${record.disease} · ${record.source} · via ${record.intake_path}`,
+        })),
+        ...s.audit,
+      ],
+    }));
+    return stamped;
+  }, []);
+
   const updateLead = useCallback((leadId, patch) => {
     setState((s) => ({
       ...s,
@@ -233,6 +265,7 @@ export function StoreProvider({ children }) {
       leadById: (id) => state.leads.find((l) => l.id === id) || null,
       communicationsFor: (leadId) => state.communications.filter((c) => c.lead_id === leadId),
       interactionsFor: (leadId) => state.interactions.filter((i) => i.lead_id === leadId),
+      addLeads,
       sendCommunication,
       recordSuppressed,
       markReplied,

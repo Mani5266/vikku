@@ -30,6 +30,7 @@ import {
   X,
 } from "lucide-react";
 import Today from "@/pages/Today";
+import Intake from "@/pages/Intake";
 import LeadDetail from "@/pages/LeadDetail";
 import NewCall from "@/pages/NewCall";
 import Qualification from "@/pages/Qualification";
@@ -78,6 +79,7 @@ const NAV = [
     role: "Agent",
     items: [
       { to: "/", label: "Today", screen: "A1", icon: Inbox, end: true },
+      { to: "/intake", label: "Add a lead", screen: "A0", icon: UserPlus },
     ],
   },
   {
@@ -402,6 +404,7 @@ export default function App() {
                 agent's first decision every morning. */}
             <Route path="/" element={guard(<Today />)} />
             <Route path="/tasks" element={guard(<Today />)} />
+            <Route path="/intake" element={guard(<Intake />)} />
             <Route path="/leads/:leadId" element={guard(<LeadDetail />)} />
             <Route path="/leads/:leadId/call" element={guard(<NewCall />)} />
             <Route path="/leads/:leadId/qualify" element={guard(<Qualification />)} />

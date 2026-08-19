@@ -338,6 +338,32 @@ const CASES = [
   // Somebody else's lead is still somebody else's.
   ["/leads/lead_047/treatment?as=agent123", ["This screen belongs to another role", "!What stands between here and the operation"]],
 
+  // A0 — the mouth of the funnel. There was no way to create a lead at all: the store had
+  // updateLead and nothing that added one, and the §3.1 guard had nothing calling it.
+  [
+    "/intake?as=agent123",
+    [
+      "Add a lead",
+      "How did this one reach us?",
+      "Somebody called or messaged us",
+      "They walked into the hospital",
+      "Paste a list from a sheet",
+      // The paths that need a server are named as unbuilt rather than left off the list.
+      "Straight from Meta, Google or the website form",
+      "Not built",
+      "Where did they come from?",
+      "Who gets it",
+      // The routing decision is stated on the form, because "why did I get this one" is the first
+      // question an agent asks about a lead they did not expect.
+      "Add and open the lead",
+      "thing(s) outstanding",
+    ],
+  ],
+  // The front desk is not always an agent seat, so a manager and an admin can take an enquiry too.
+  ["/intake?as=manager123", ["Add a lead", "Who gets it"]],
+  ["/intake?as=admin123", ["Add a lead"]],
+  ["/intake?as=leadership123", ["This screen belongs to another role", "!How did this one reach us?"]],
+
   // ---- the eight screens the specification described and nobody had built ---
   // Each assertion below is the one refusal that screen exists to make. A screen that renders
   // and does not make its refusal has not been built, it has been drawn.
