@@ -189,6 +189,12 @@ function SidebarFooter() {
   const { reset } = useStore();
   const { user, signOut } = useSession();
   const role = roleOf(user);
+  // Reset throws away every call logged, every appointment moved and every lead closed in this
+  // session, and it sits one button below Sign out in a sidebar that is on screen the whole time.
+  // A single stray click was enough to empty a demo mid-sentence, so the button now asks first.
+  // Two taps rather than a native confirm(): a browser dialog blocks the render tests and looks
+  // like the page broke, whereas an inline second state is visible, reversible and testable.
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <div className="space-y-2 p-2">
@@ -212,10 +218,35 @@ function SidebarFooter() {
           <LogOut className="h-6 w-6" />
         </button>
       </div>
-      <Button variant="outline" size="sm" className="w-full" onClick={reset}>
-        <RotateCcw className="h-4 w-4" />
-        Reset demo data
-      </Button>
+      {confirming ? (
+        <div className="space-y-1">
+          <p className="px-2 text-xs text-destructive">
+            This throws away every call, appointment and closure recorded in this session.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                reset();
+                setConfirming(false);
+              }}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Yes, reset
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1" onClick={() => setConfirming(false)}>
+              Keep it
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="outline" size="sm" className="w-full" onClick={() => setConfirming(true)}>
+          <RotateCcw className="h-4 w-4" />
+          Reset demo data
+        </Button>
+      )}
       <p className="px-2 text-xs text-placeholder">
         Roles are enforced in the interface. The same map has to be enforced on the server before real
         patient data reaches it.
