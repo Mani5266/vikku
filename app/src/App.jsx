@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import Today from "@/pages/Today";
 import Intake from "@/pages/Intake";
+import QueueGroup from "@/pages/QueueGroup";
 import LeadDetail from "@/pages/LeadDetail";
 import NewCall from "@/pages/NewCall";
 import Qualification from "@/pages/Qualification";
@@ -220,7 +221,7 @@ function AgentDay({ onNavigate }) {
         {groups.map((group) => (
           <Link
             key={group.key}
-            to={`/?focus=${group.key}`}
+            to={`/queue/${group.key}`}
             onClick={onNavigate}
             className="flex items-center gap-2 rounded-md px-4 py-2 text-sm text-muted-foreground hover:bg-secondary active:bg-secondary"
           >
@@ -307,10 +308,6 @@ function SidebarFooter() {
           Reset demo data
         </Button>
       )}
-      <p className="px-2 text-xs text-placeholder">
-        Roles are enforced in the interface. The same map has to be enforced on the server before real
-        patient data reaches it.
-      </p>
     </div>
   );
 }
@@ -405,6 +402,7 @@ export default function App() {
             <Route path="/" element={guard(<Today />)} />
             <Route path="/tasks" element={guard(<Today />)} />
             <Route path="/intake" element={guard(<Intake />)} />
+            <Route path="/queue/:bucket" element={guard(<QueueGroup />)} />
             <Route path="/leads/:leadId" element={guard(<LeadDetail />)} />
             <Route path="/leads/:leadId/call" element={guard(<NewCall />)} />
             <Route path="/leads/:leadId/qualify" element={guard(<Qualification />)} />

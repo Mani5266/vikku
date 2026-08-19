@@ -44,6 +44,7 @@ const CASES = [
     "/?as=agent123",
     [
       "Everything you owe today, worst first",
+      "!Roles are enforced in the interface",
       "Start here",
       "Priya Sharma",
       "What they said last time",
@@ -363,6 +364,31 @@ const CASES = [
   ["/intake?as=manager123", ["Add a lead", "Who gets it"]],
   ["/intake?as=admin123", ["Add a lead"]],
   ["/intake?as=leadership123", ["This screen belongs to another role", "!How did this one reach us?"]],
+
+  // Each queue group is its own page. The sidebar used to scroll into a section of Today, which
+  // read as one long document — an agent landed part-way down a page with five other groups on it.
+  [
+    "/queue/ring-now?as=agent123",
+    [
+      "Ring now",
+      "Back to the whole day",
+      "Nobody has called these at all",
+      "Kavya Reddy",
+      // Only this group's leads. The sidebar still names every group, so the check is on a lead
+      // that belongs to a different one.
+      "!Vijay Hegde",
+      "!Show 6 finished",
+    ],
+  ],
+  [
+    "/queue/after-consultation?as=agent123",
+    ["Seen the doctor — finish the job", "Shankar Naik", "closest to a decision", "!Kavya Reddy"],
+  ],
+  // An empty group is a designed state with a way onward, not a blank page.
+  ["/queue/waiting?as=sneha123", ["Waiting", "Back to the whole day"]],
+  // A typed bucket that does not exist goes home rather than rendering an error.
+  ["/queue/not-a-bucket?as=agent123", ["No such group", "is not one of the queue", "The queue has these"]],
+  ["/queue/ring-now?as=manager123", ["This screen belongs to another role", "!Nobody has called these at all"]],
 
   // ---- the eight screens the specification described and nobody had built ---
   // Each assertion below is the one refusal that screen exists to make. A screen that renders

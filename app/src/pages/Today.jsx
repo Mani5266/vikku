@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Phone } from "lucide-react";
 import { useSession } from "@/store/session";
 import { useAgentDay } from "@/store/useAgentDay";
 import { GreetingHeader } from "@/components/shared/PageHeader";
+import QueueRow from "@/components/shared/QueueRow";
 import { Button } from "@/components/ui/button";
 import { buildToday } from "@/lib/today";
 import { telHref } from "@/lib/agentCopy";
@@ -31,79 +32,14 @@ const TONE = {
   default: "text-foreground",
 };
 
-function Row({ row }) {
-  const { lead, duty, said, step, overdue } = row;
-
-  return (
-    <li className="card-surface flex flex-wrap items-start gap-4 p-4">
-      <div className="min-w-[12rem] flex-1">
-        {/* The patient name is how an agent opens the lead, and on a phone it was a 17px-tall
-            target — under the 24px WCAG 2.5.8 minimum and well under what a thumb can hit while
-            walking. The text size is unchanged; the tap area is padded out around it. */}
-        <Link
-          to={`/leads/${lead.id}`}
-          className="-my-1 inline-flex min-h-[2.75rem] items-center py-1 text-sm font-semibold hover:underline"
-        >
-          {lead.patient_name}
-        </Link>
-        <p className="text-xs text-muted-foreground">
-          {lead.disease}
-          {lead.plan?.temperature ? ` · ${lead.plan.temperature}` : ""}
-        </p>
-        {duty && (
-          <p className={cn("mt-1 text-sm", overdue ? "font-semibold text-destructive" : "text-foreground")}>
-            {duty.label}
-          </p>
-        )}
-        {duty?.detail && <p className="text-xs text-muted-foreground">{duty.detail}</p>}
-      </div>
-
-      <div className="min-w-[14rem] flex-1">
-        <p className="text-xs text-muted-foreground">What they said last time</p>
-        <p className="text-sm">{said?.said || "Not called yet"}</p>
-        {said?.objection && (
-          <p className="text-xs text-muted-foreground">{`Worry: ${said.objection}`}</p>
-        )}
-      </div>
-
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <a
-          href={telHref(lead.phone_number)}
-          className="inline-flex h-12 items-center gap-2 rounded-md bg-card px-4 text-sm font-semibold shadow-card active:bg-secondary"
-        >
-          <Phone className="h-4 w-4" />
-          Call
-        </a>
-        {step?.to && (
-          <Link
-            to={step.to}
-            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-card active:bg-primary-pressed"
-          >
-            {step.action}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
-      </div>
-    </li>
-  );
-}
 
 export default function Today() {
   const { user } = useSession();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
   const day = useAgentDay();
-  const focus = params.get("focus");
-  // The sidebar links into a group rather than to a second screen. Finished is collapsed by
-  // default, so arriving at it from the sidebar has to open it or the link goes nowhere visible.
-  const [showFinished, setShowFinished] = useState(focus === "finished");
-
-  useEffect(() => {
-    if (!focus) return;
-    if (focus === "finished") setShowFinished(true);
-    const target = document.getElementById(`group-${focus}`);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [focus, day]);
+  // Each group is its own page now, so the ?focus= scroll-and-highlight machinery that used to
+  // live here is gone. This screen is the whole day in urgency order, for working straight down.
+  const [showFinished, setShowFinished] = useState(false);
 
   const leads = day?.rows ?? [];
 
@@ -185,7 +121,7 @@ export default function Today() {
               </div>
               <ul className="space-y-2">
                 {group.rows.map((row) => (
-                  <Row key={row.lead.id} row={row} />
+                  <QueueRow key={row.lead.id} row={row} />
                 ))}
               </ul>
             </section>

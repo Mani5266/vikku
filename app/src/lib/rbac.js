@@ -143,6 +143,7 @@ export const ROUTE_SCREENS = [
   { path: "/", screen: "A1", exact: true },
   { path: "/tasks", screen: "A7" },
   { path: "/intake", screen: "A0" },
+  { path: "/queue", screen: "A1" },
   // Everything about one lead lives under /leads/:id. The suffix picks the screen, because the
   // lead id sits in the middle of the path and a prefix match cannot see past it.
   { path: "/leads", screen: "A2" },
