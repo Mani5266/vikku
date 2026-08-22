@@ -8,7 +8,7 @@ from `implementation/` and driven by real screens against seeded data.
 cd app
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 13 suites — 294 checks — then 78 server-rendered routes
+npm test         # 14 suites — 311 checks — then 80 server-rendered routes
 npm run build    # production bundle in app/dist
 ```
 
@@ -44,7 +44,7 @@ one leadership decides from.
 |-------|--------|------------------|
 | `/` | [A1 My Leads](../screens/01-agent-screens.md#a1-my-leads) | The queue, with `canSendMessage()` already evaluated per row. Call is never gated — Section 8 governs messages only |
 | `/tasks` | [A7 Daily Tasks](../screens/01-agent-screens.md#a7-daily-tasks) | The 5-minute first-touch clock, and the protocol's calls as mandatory duties the agent cannot remove from the list |
-| `/leads/:id` | [A2 Lead Detail](../screens/01-agent-screens.md#a2-lead-detail-360-view) | Append-only activity history, protocol rail, next-allowed-send rail, suppressions on the lead |
+| `/leads/:id` | [A2 Lead Detail](../screens/01-agent-screens.md#a2-lead-detail-360-view) | Append-only activity history — a call logged wrong is corrected by a second entry that references it, never by editing the first — protocol rail, next-allowed-send rail, suppressions on the lead |
 | `/leads/:id/call` | [A3 New Call](../screens/01-agent-screens.md#a3-new-call--call-logging) | Save gated on `isRemarkComplete()`. Not-connected calls take the Section 15 retry path instead |
 | `/leads/:id/compose` | [A6 Communication Composer](../screens/01-agent-screens.md#a6-communication-composer) | The 48-hour floor, channel rotation, template reuse, Cold-lead content blocks, the four hard stops, manager exception with audit |
 
@@ -570,9 +570,10 @@ npm run test:intake    # test/intake.test.mjs — 26 checks on the mouth of the 
 npm run test:xlsx      # test/xlsx.test.mjs — 17 checks on the spreadsheet reader, against real .xlsx archives
 npm run test:transcript # test/transcript.test.mjs — 12 checks on the live-transcript token and audio handling
 npm run test:auth      # test/auth.test.mjs — 26 checks on password hashing, the session cookie and the guard on the paid endpoints
+npm run test:corrections # test/corrections.test.mjs — 17 checks on correcting a call without erasing the first version
 npm run test:sheet     # test/sheet.test.mjs — 14 checks against the hospital's real weekly export
 npm run test:design    # test/design.test.mjs — 12 checks on the chart palette and trend arithmetic
-npm run test:render    # server-renders all 78 routes and asserts on their content
+npm run test:render    # server-renders all 80 routes and asserts on their content
 ```
 
 `test:design` enforces the claims `design/design.md` makes: the ramp stays at six steps, a slice
@@ -693,6 +694,47 @@ reports can be built and checked, which is not the same as the entities existing
 Twenty-three of the 35 specified screens are here, plus Vikku AI and Weekly Sheet Diagnosis, neither of which is in the specification —
 it was asked for directly. Each is **partial against its spec**. What is missing per screen, stated
 rather than implied:
+
+## The agent screens, against their spec
+
+[`screens/01-agent-screens.md`](../screens/01-agent-screens.md) specifies nine. Eight enforce the
+guards their spec names; A7 is partial and is in the table below it. What each one is still missing:
+
+| Screen | Specified but not built | Where it stands |
+|--------|-------------------------|-----------------|
+| A1 My Leads | Snooze with a mandatory reason | Real, and the next thing worth building here. An agent with a good reason to push a lead has no way to say so, so the lead reads as skipped |
+| A2 Lead Detail | Request doctor callback, financial counseling, discount | Each is a handoff to somebody this build does not have yet. M8 holds the escalation side; the receiving desks are O2 and beyond |
+| A3 New Call | Who else was on the line | Small and real — the decision maker is often not the patient, and A4 already asks about decision authority without ever recording who was actually there |
+| A4 Qualification | — | The eleven factors, the computed band, the side-by-side indicator checklist and the override justification are all enforced |
+| A5 Follow-up Update | — | The day grid, the suppression reasons, the forced Warm Day 15 decision and the no-silent-expiry rule are all enforced |
+| A6 Composer | — | The 48-hour floor, the rotation, the template and nurture guards and the manager exception are the shipped engine |
+| A8 Appointment | — | Ten §17 states with unreachable ones greyed, reasons on cancel and no-show, recovery task created on a no-show |
+| A9 Closure | — | The eight §23 fields, evidence that must resolve to a real record, the §19 segment, and the refusal of "expired" as a reason |
+
+Correcting a logged call was on this list until it was built. §29 says corrections post a new entry
+referencing the original, the Audit Log screen printed that sentence, and nothing implemented it —
+there was no way to correct a call at all, so the promise held only because nobody could test it.
+
+### Three things in the spec that are deliberately not built
+
+Not oversights. Each was read, and each makes a worse product than leaving it out.
+
+**Bulk-select for a compliant message batch (A1).** The thesis is an argument against blasting: §8
+governs how long to wait between two messages to *one* patient, and §11 says the content has to
+follow a sequence built for that patient. A multi-select on the queue is the exact affordance that
+turns a nurturing sequence back into a campaign send. The per-lead guards would still hold, so
+nothing unsafe would go out — but the screen would be teaching the habit the rest of the product
+exists to break.
+
+**Request reassignment from the queue (A1).** M5 already owns assignment, refuses a move into a
+full queue, and requires a reason that reaches the audit log. A second door to the same action means
+two code paths for one rule, and the one on the agent's own screen is the one that ends up looser.
+
+**Phone masked per role permission (A1).** There is no server. Masking a number in a component that
+has already received it is a curtain, not a permission — the value is in the payload either way.
+This becomes real the day the leads live in a database and the API decides what to send. Until then
+it would be a claim the product cannot keep, and this README would be the thing asserting it.
+
 
 | Screen | Built | Specified but not built |
 |--------|-------|-------------------------|

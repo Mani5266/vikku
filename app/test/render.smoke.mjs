@@ -97,6 +97,9 @@ const CASES = [
       "Treatment",
       "Next step",
       "You are here",
+      // §29 promised that corrections post a new entry and nothing implemented them. The way in
+      // is on every logged call.
+      "Logged wrong? Correct it",
     ],
   ],
   // A4 — the temperature falls out of eleven answers rather than a feeling.
@@ -374,6 +377,10 @@ const CASES = [
     "/intake?as=agent123&path=bulk",
     ["Add a lead", "Bring in a list from a sheet"],
   ],
+  ["/leads/lead_001/correct?as=agent123", ["No such call", "That call is not on this lead"]],
+  // lead_003 is Sneha Pillai's, so Nikhil is refused the correction screen on it. Screen access
+  // is not lead access, and correcting somebody else's call record would be worse than reading it.
+  ["/leads/lead_003/correct?as=agent123", ["This screen belongs to another role", "!The first version stays"]],
   ["/intake?as=manager123", ["Add a lead", "Who gets it"]],
   ["/intake?as=admin123", ["Add a lead"]],
   ["/intake?as=leadership123", ["This screen belongs to another role", "!How did this one reach us?"]],

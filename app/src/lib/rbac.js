@@ -154,6 +154,9 @@ export const ROUTE_SCREENS = [
   { path: "/leads", suffix: "/appointment", screen: "A8" },
   { path: "/leads", suffix: "/close", screen: "A9" },
   { path: "/leads", suffix: "/treatment", screen: "A10" },
+  // Correcting a logged call is part of the lead record, so it belongs to A2 rather than to the
+  // call screen — whoever may read the history may fix it.
+  { path: "/leads", suffix: "/correct", screen: "A2" },
   { path: "/manager", screen: "M1" },
   { path: "/daily", screen: "M2" },
   { path: "/funnel", screen: "M3" },

@@ -5,6 +5,7 @@ import { canSendMessage, nextAllowedSendAt, nextChannel, nextNurtureStep } from 
 import { FOLLOWUP_PROTOCOLS } from "@/lib/followupProtocols";
 import { useStore } from "@/store/store";
 import { useSession } from "@/store/session";
+import { foldCorrections } from "@/lib/corrections";
 import { canOpenLead } from "@/lib/rbac";
 import NoAccess from "@/components/shared/NoAccess";
 import PageHeader from "@/components/shared/PageHeader";
@@ -16,7 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatDateTime, relative } from "@/lib/utils";
 
 // A2. Lead Detail (360 View) — Thesis §3, §4, §5, §29.
-// Activity history is append-only: nothing on this screen edits a past record.
+// Activity history is append-only: nothing on this screen edits a past record. A call logged
+// wrong is corrected by posting a second record that references it, never by changing the first.
 
 export default function LeadDetail() {
   const { leadId } = useParams();
@@ -41,13 +43,19 @@ export default function LeadDetail() {
             .filter(Boolean)
             .join(" · "),
     }));
-    const fromCalls = interactions.map((i) => ({
+    // Corrections are folded in first, so a call that has been corrected can say so and the
+    // correction can say what it replaces. Both stay — §29 is append-only, and hiding the first
+    // version is exactly what an audit trail exists to prevent.
+    const fromCalls = foldCorrections(interactions).map((i) => ({
       id: i.id,
       at: i.interaction_date,
       kind: "call",
       title: `Call — ${i.contact_outcome}${i.not_connected_reason ? ` (${i.not_connected_reason})` : ""}`,
       detail: i.patient_said || i.feedback || "—",
       extra: i.next_action ? `Next: ${i.next_action} at ${formatDateTime(i.next_action_at)}` : null,
+      supersededBy: i.supersededBy,
+      isCorrection: i.isCorrection,
+      correction_reason: i.correction_reason,
     }));
     return [...fromComms, ...fromCalls].sort((a, b) => new Date(b.at) - new Date(a.at));
   }, [communications, interactions]);
@@ -152,6 +160,29 @@ export default function LeadDetail() {
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
                   {item.extra && <p className="mt-0.5 text-xs">{item.extra}</p>}
+                  {/* Correcting a call writes a second record rather than editing this one, so the
+                      history stays append-only and the first version is still there to read. */}
+                  {item.kind === "call" && !item.supersededBy && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/leads/${lead.id}/correct?call=${item.id}`)}
+                      className="mt-1 text-xs font-semibold text-primary underline-offset-2 hover:underline"
+                    >
+                      Logged wrong? Correct it
+                    </button>
+                  )}
+                  {item.supersededBy && (
+                    <p className="mt-1 text-xs font-semibold text-warning">
+                      Corrected later — a newer version of this call is below.
+                    </p>
+                  )}
+                  {item.isCorrection && (
+                    <p className="mt-1 text-xs font-semibold text-primary">
+                      {item.correction_reason
+                        ? `Correction — ${item.correction_reason}`
+                        : "Correction of an earlier entry"}
+                    </p>
+                  )}
                 </div>
               ))}
               {timeline.length === 0 && <p className="text-sm text-muted-foreground">Nothing logged yet.</p>}
