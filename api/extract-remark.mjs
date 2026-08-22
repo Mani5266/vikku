@@ -20,6 +20,7 @@
 // them. That sentence is a comment in the shipped StructuredRemark component and it stays true.
 
 import { config, fail, readPost, require } from "./_lib/config.mjs";
+import { requireSession } from "./_lib/auth.mjs";
 
 // Kept in step with implementation/src/components/shared/StructuredRemark.jsx and
 // app/src/lib/reasonTaxonomy.js. The enums are closed so a draft cannot introduce a next action or
@@ -124,6 +125,10 @@ const MAX_TRANSCRIPT_CHARS = 24000;
 export default async function handler(request, response) {
   const body = readPost(request, response);
   if (body === null) return;
+
+  // Before anything that costs money.
+  const session = requireSession(request, response);
+  if (!session) return;
 
   const transcript = String(body.transcript ?? "").trim();
   if (transcript.length < 40) {

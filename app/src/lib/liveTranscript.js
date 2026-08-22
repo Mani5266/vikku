@@ -141,8 +141,17 @@ export class LiveTranscript {
     this._setState(TRANSCRIPT_STATES.STARTING);
 
     try {
-      const response = await fetch("/api/soniox-token", { method: "POST" });
+      const response = await fetch("/api/soniox-token", {
+        method: "POST",
+        // The session cookie is HttpOnly and scoped to /api. This is what sends it.
+        credentials: "same-origin",
+      });
       const body = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        // Not a broken microphone. Telling somebody to check their microphone when what they need
+        // is to sign in again is how an afternoon gets wasted.
+        throw new Error("Sign in again before listening — this deployment asks for it.");
+      }
       if (!response.ok || !body.apiKey) {
         throw new Error(body.error || "The server could not get a transcription key.");
       }
@@ -280,6 +289,7 @@ export async function draftRemark(transcript, lead) {
   try {
     const response = await fetch("/api/extract-remark", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         transcript,

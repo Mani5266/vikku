@@ -50,6 +50,19 @@ export function SessionProvider({ children }) {
       // session still works, it just will not survive a reload
     }
     setUser(account);
+
+    // Ask the API for a session cookie with the same credentials. The browser's own check decides
+    // what this app shows; this one decides whether the endpoints that cost money will answer.
+    // Deliberately not awaited: the API is optional, and a deployment without it — the static
+    // preview, the render test — must still sign in instantly.
+    fetch("/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    }).catch(() => {
+      // No API here. Listening will say so when somebody tries to use it.
+    });
+
     return true;
   }, []);
 
@@ -59,6 +72,9 @@ export function SessionProvider({ children }) {
     } catch {
       // nothing to clean up
     }
+    // The cookie is HttpOnly, so only the server can clear it. Leaving it behind would keep the
+    // ability to spend on this deployment alive after somebody thought they had signed out.
+    fetch("/api/session", { method: "DELETE" }).catch(() => {});
     setUser(null);
   }, []);
 

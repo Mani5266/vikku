@@ -11,12 +11,17 @@
 // alone, and is worth nothing to anybody who scrapes it after the call.
 
 import { config, fail, readPost, require } from "./_lib/config.mjs";
+import { requireSession } from "./_lib/auth.mjs";
 
 const SONIOX_TEMPORARY_KEY_URL = "https://api.soniox.com/v1/auth/temporary-api-key";
 
 export default async function handler(request, response) {
   const body = readPost(request, response);
   if (body === null) return;
+
+  // Before anything that costs money.
+  const session = requireSession(request, response);
+  if (!session) return;
 
   try {
     require("sonioxApiKey");

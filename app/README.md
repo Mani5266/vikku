@@ -8,7 +8,7 @@ from `implementation/` and driven by real screens against seeded data.
 cd app
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 12 suites — 268 checks — then 78 server-rendered routes
+npm test         # 13 suites — 287 checks — then 78 server-rendered routes
 npm run build    # production bundle in app/dist
 ```
 
@@ -569,6 +569,7 @@ npm run test:treatment # test/treatment.test.mjs — 20 checks on the half of th
 npm run test:intake    # test/intake.test.mjs — 26 checks on the mouth of the funnel and the §3.1 write guard
 npm run test:xlsx      # test/xlsx.test.mjs — 17 checks on the spreadsheet reader, against real .xlsx archives
 npm run test:transcript # test/transcript.test.mjs — 12 checks on the live-transcript token and audio handling
+npm run test:auth      # test/auth.test.mjs — 19 checks on the API session cookie and the guard on the paid endpoints
 npm run test:sheet     # test/sheet.test.mjs — 14 checks against the hospital's real weekly export
 npm run test:design    # test/design.test.mjs — 12 checks on the chart palette and trend arithmetic
 npm run test:render    # server-renders all 78 routes and asserts on their content
