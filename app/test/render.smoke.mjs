@@ -172,6 +172,12 @@ const CASES = [
       "What the patient said",
       "How interested they are",
       "Full form — all seven parts",
+      // Listening is offered on the call screen and starts with the dial. The socket and the
+      // microphone need a browser, so what is asserted here is that the way in exists and that the
+      // panel stays hidden until it is used.
+      "Listen to this call",
+      "!Listening — put the phone on speaker",
+      "!What was said",
       "!Structured remark (seven parts)",
       "!Sub-reason",
     ],

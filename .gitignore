@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .gstack/
+
+# API keys are set in the Vercel dashboard, never in the repo.
+.env
+.env.local

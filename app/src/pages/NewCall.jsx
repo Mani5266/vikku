@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronDown, Mic, MicOff, PhoneCall, PhoneOff, Save, Timer } from "lucide-react";
+import { ChevronDown, Ear, EarOff, Loader2, Mic, MicOff, PhoneCall, PhoneOff, Save, Sparkles, Timer } from "lucide-react";
 import StructuredRemark, { isRemarkComplete, missingRemarkParts } from "@/components/shared/StructuredRemark";
 import { useStore } from "@/store/store";
 import { useSession } from "@/store/session";
@@ -24,6 +24,7 @@ import {
   followUpPresets,
 } from "@/lib/quickPhrases";
 import { DICTATION_LANGUAGES, useDictation } from "@/lib/useDictation";
+import { LiveTranscript, TRANSCRIPT_STATES, draftRemark } from "@/lib/liveTranscript";
 import { cn } from "@/lib/utils";
 
 // A3. Log a call — built for the ninetieth call of the day.
@@ -119,6 +120,16 @@ export default function NewCall() {
   // before the agent had dialled.
   //
   // It now starts when they tap the dial button and shows nothing before that.
+  // Listening to the call. The session is a ref rather than state because its lifetime is the
+  // call's, not the render's — a socket owned by an effect gets torn down by a re-render at the
+  // worst possible moment.
+  const listener = useRef(null);
+  const [listenState, setListenState] = useState(TRANSCRIPT_STATES.IDLE);
+  const [transcript, setTranscript] = useState("");
+  const [listenError, setListenError] = useState(null);
+  const [drafting, setDrafting] = useState(false);
+  const [draftNote, setDraftNote] = useState(null);
+
   const [dialledAt, setDialledAt] = useState(null);
   const [seconds, setSeconds] = useState(0);
 
@@ -155,6 +166,64 @@ export default function NewCall() {
 
   const said = lastWord(store.interactionsFor(lead.id));
   const attemptNumber = store.interactionsFor(lead.id).length + 1;
+  // Stop listening if the agent leaves the screen mid-call. Without this the microphone stays
+  // open and the meter keeps running on a call nobody is on.
+  useEffect(() => () => listener.current?.stop().catch(() => {}), []);
+
+  const startListening = async () => {
+    setListenError(null);
+    setDraftNote(null);
+    const session = new LiveTranscript({
+      onUpdate: ({ text }) => setTranscript(text),
+      onState: setListenState,
+      onError: setListenError,
+    });
+    listener.current = session;
+    await session.start();
+  };
+
+  const stopAndDraft = async () => {
+    const session = listener.current;
+    if (!session) return;
+    const finalText = await session.stop();
+    setTranscript(finalText);
+    listener.current = null;
+    if (!finalText) return;
+
+    setDrafting(true);
+    const { draft, error, reason } = await draftRemark(finalText, lead);
+    setDrafting(false);
+
+    if (error || !draft) {
+      // The form the agent already had is still there. An assist that can block work is worse
+      // than no assist.
+      setDraftNote(error || reason || "Nothing could be drafted from that call.");
+      return;
+    }
+
+    // Fill only what is empty. An agent who already typed something meant it, and having a
+    // draft overwrite their own words is how a person stops trusting the button.
+    setRemark((current) => ({
+      ...current,
+      patientSaid: current.patientSaid?.trim() ? current.patientSaid : draft.patientSaid || "",
+      agentExplained: current.agentExplained?.trim() ? current.agentExplained : draft.agentExplained || "",
+      objectionCategory: current.objectionCategory || draft.objectionCategory || "",
+      objectionRaised: current.objectionRaised?.trim() ? current.objectionRaised : draft.objectionRaised || "",
+      materialShared: current.materialShared?.trim() ? current.materialShared : draft.materialShared || "",
+      nextAction: current.nextAction || draft.nextAction || "",
+    }));
+    if (!temperature && draft.temperature) setTemperature(draft.temperature);
+
+    setDraftNote(
+      draft.confidence === "low"
+        ? `Drafted, but the audio was hard to read${draft.notes ? ` — ${draft.notes}` : ""}. Check every line.`
+        : draft.notes || "Drafted from the call. Read it before saving — you are the one signing it."
+    );
+  };
+
+  const listening = listenState === TRANSCRIPT_STATES.LISTENING;
+  const starting = listenState === TRANSCRIPT_STATES.STARTING;
+
   const complete = isRemarkComplete(remark, { connected });
   const missing = missingRemarkParts(remark);
 
@@ -281,15 +350,85 @@ export default function NewCall() {
               {`Attempt ${attemptNumber} · ${lead.plan?.temperature || "not qualified yet"} · day ${lead.plan?.day ?? 1}`}
             </p>
           </div>
-          <a
-            href={telHref(lead.phone_number)}
-            onClick={() => setDialledAt((at) => at ?? Date.now())}
-            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-card active:bg-primary-pressed"
-          >
-            <PhoneCall className="h-6 w-6" />
-            Call {lead.phone_number}
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={telHref(lead.phone_number)}
+              onClick={() => {
+                setDialledAt((at) => at ?? Date.now());
+                if (!listening && !starting) startListening();
+              }}
+              className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-card active:bg-primary-pressed"
+            >
+              <PhoneCall className="h-6 w-6" />
+              Call {lead.phone_number}
+            </a>
+            {/* Listening starts with the dial and can be turned on or off by hand — some calls
+                should not be listened to, and the agent decides which. */}
+            {listening || starting ? (
+              <button
+                type="button"
+                onClick={stopAndDraft}
+                className="inline-flex h-12 items-center gap-2 rounded-md bg-card px-4 text-sm font-semibold shadow-card active:bg-secondary"
+              >
+                <EarOff className="h-5 w-5 text-danger" />
+                {starting ? "Starting\u2026" : "Stop and fill the form"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startListening}
+                className="inline-flex h-12 items-center gap-2 rounded-md bg-card px-4 text-sm font-semibold shadow-card active:bg-secondary"
+              >
+                <Ear className="h-5 w-5 text-muted-foreground" />
+                Listen to this call
+              </button>
+            )}
+          </div>
         </div>
+
+        {(listening || starting || transcript || listenError || drafting || draftNote) && (
+          <section className="card-surface p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                {listening ? (
+                  <>
+                    <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-danger" />
+                    Listening — put the phone on speaker
+                  </>
+                ) : drafting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    Reading the call
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    What was said
+                  </>
+                )}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Nothing is recorded. The words are kept, the audio is not.
+              </p>
+            </div>
+
+            {listenError && (
+              <p className="mt-2 text-xs font-semibold text-danger">
+                {listenError} — type the form as usual.
+              </p>
+            )}
+
+            {transcript && (
+              <p className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
+                {transcript}
+              </p>
+            )}
+
+            {draftNote && (
+              <p className="mt-3 rounded-md bg-secondary p-3 text-xs font-medium">{draftNote}</p>
+            )}
+          </section>
+        )}
 
         {/* One tap for a dial that went nowhere — the 40% of calls nobody wants to fill a form for.
             These six look like the chips everywhere else on this screen and behave nothing like

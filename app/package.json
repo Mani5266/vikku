@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node ../implementation/test/communicationEngine.test.mjs && node test/rbac.test.mjs && node test/agent.test.mjs && node test/screens.test.mjs && node test/operations.test.mjs && node test/seed.test.mjs && node test/treatment.test.mjs && node test/intake.test.mjs && node test/xlsx.test.mjs && node test/sheet.test.mjs && node test/design.test.mjs && node test/render.smoke.mjs",
+    "test": "node ../implementation/test/communicationEngine.test.mjs && node test/rbac.test.mjs && node test/agent.test.mjs && node test/screens.test.mjs && node test/operations.test.mjs && node test/seed.test.mjs && node test/treatment.test.mjs && node test/intake.test.mjs && node test/xlsx.test.mjs && node test/transcript.test.mjs && node test/sheet.test.mjs && node test/design.test.mjs && node test/render.smoke.mjs",
     "test:engine": "node ../implementation/test/communicationEngine.test.mjs",
     "test:render": "node test/render.smoke.mjs",
     "test:rbac": "node test/rbac.test.mjs",
@@ -20,7 +20,8 @@
     "test:treatment": "node test/treatment.test.mjs",
     "test:intake": "node test/intake.test.mjs",
     "test:sheet": "node test/sheet.test.mjs",
-    "test:xlsx": "node test/xlsx.test.mjs"
+    "test:xlsx": "node test/xlsx.test.mjs",
+    "test:transcript": "node test/transcript.test.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
