@@ -52,7 +52,14 @@ async function withEnv(vars, fn) {
   }
 }
 
-const SIGNED_IN = { SESSION_SECRET: "a-test-secret-that-is-long-enough", API_LOGINS: "agent123:agent123,manager123:manager123" };
+// One real user, hashed the way the deployment would hold them. Built once because scrypt is
+// deliberately slow — that cost is the point in production and only a nuisance here.
+const users = await load("api/_lib/users.mjs");
+const HASH = await users.hashPassword("correct-horse-battery");
+const SIGNED_IN = {
+  SESSION_SECRET: "a-test-secret-that-is-long-enough",
+  API_USERS: `agent123|agent|Nikhil Rao|Jayanagar|${HASH}`,
+};
 
 /** A response object shaped like the one Vercel passes in. */
 function fakeResponse() {
@@ -178,7 +185,7 @@ await check("rubbish in the cookie is not signed in, and does not throw", async 
 await check("with no secret configured, nothing signs and nothing verifies", async () => {
   // Fail closed. An auth layer that allows everything when misconfigured is worse than none,
   // because it looks like protection on the dashboard.
-  await withEnv({ SESSION_SECRET: null, API_LOGINS: "agent123:agent123" }, () => {
+  await withEnv({ SESSION_SECRET: null, API_USERS: `agent123|agent|Nikhil Rao|Jayanagar|${HASH}` }, () => {
     assert.equal(auth.signSession({ username: "agent123" }), null);
     assert.equal(auth.verifySession("anything"), null);
   });
@@ -205,17 +212,75 @@ await check("signing out expires the cookie rather than leaving it to run out", 
   assert.match(auth.clearedCookieHeader(), /Max-Age=0/);
 });
 
-// ---- the login list ----------------------------------------------------------------------------
+// ---- passwords ---------------------------------------------------------------------------------
 
-await check("logins are read from the environment and never defaulted", async () => {
-  await withEnv({ API_LOGINS: null }, () => assert.equal(auth.configuredLogins(), null));
-  await withEnv({ API_LOGINS: "a:1, b:2 " }, () => {
-    const logins = auth.configuredLogins();
-    assert.equal(logins.get("a"), "1");
-    assert.equal(logins.get("b"), "2");
+await check("a password is never stored, only a salted hash of it", async () => {
+  const hash = await users.hashPassword("correct-horse-battery");
+  assert.match(hash, /^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/);
+  assert.ok(!hash.includes("correct-horse-battery"));
+  assert.equal(await users.verifyPassword("correct-horse-battery", hash), true);
+  assert.equal(await users.verifyPassword("correct-horse-batterx", hash), false);
+  assert.equal(await users.verifyPassword("", hash), false);
+});
+
+await check("the same password twice gives two different hashes", async () => {
+  // Per-user salt. Without it, two people who choose the same password are visibly the same in the
+  // records, and one cracked hash opens both accounts.
+  const first = await users.hashPassword("shared-password");
+  const second = await users.hashPassword("shared-password");
+  assert.notEqual(first, second);
+  assert.equal(await users.verifyPassword("shared-password", first), true);
+  assert.equal(await users.verifyPassword("shared-password", second), true);
+});
+
+await check("a malformed or missing hash refuses rather than throwing", async () => {
+  for (const stored of ["", null, undefined, "not-a-hash", "scrypt$zz$zz", "md5$a$b"]) {
+    assert.equal(await users.verifyPassword("anything", stored), false, String(stored));
+  }
+});
+
+// ---- the people who may sign in -----------------------------------------------------------------
+
+await check("user records are read from the environment and never defaulted", async () => {
+  await withEnv({ API_USERS: null }, () => assert.equal(users.configuredUsers().size, 0));
+  await withEnv({ API_USERS: `nikhil|agent|Nikhil Rao|Jayanagar|${HASH}` }, () => {
+    const record = users.configuredUsers().get("nikhil");
+    assert.equal(record.role, "agent");
+    assert.equal(record.name, "Nikhil Rao");
+    assert.equal(record.branch, "Jayanagar");
   });
-  // A password containing a colon still works — only the first colon separates.
-  await withEnv({ API_LOGINS: "a:pa:ss" }, () => assert.equal(auth.configuredLogins().get("a"), "pa:ss"));
+});
+
+await check("every role is accepted and an unknown one is dropped", () => {
+  for (const role of users.ROLES) {
+    const parsed = users.parseUsers(`somebody|${role}|Name|Branch|${HASH}`);
+    assert.equal(parsed.get("somebody").role, role, role);
+  }
+  // A typo must not become a new permission level.
+  assert.equal(users.parseUsers(`somebody|superuser|Name|Branch|${HASH}`).size, 0);
+});
+
+await check("a commented-out record cannot sign in", () => {
+  // How somebody is disabled without losing the note about why.
+  const parsed = users.parseUsers(`# left in March\n# nikhil|agent|Nikhil Rao|Jayanagar|${HASH}`);
+  assert.equal(parsed.size, 0);
+});
+
+await check("several people are read from one variable", () => {
+  const parsed = users.parseUsers(
+    `nikhil|agent|Nikhil Rao|Jayanagar|${HASH}\nmeera|manager|Meera Raghavan|All branches|${HASH}\nvikram|leadership|Vikram Reddy|All branches|${HASH}`
+  );
+  assert.equal(parsed.size, 3);
+  assert.deepEqual([...parsed.values()].map((user) => user.role), ["agent", "manager", "leadership"]);
+});
+
+await check("authenticating never hands back the hash", async () => {
+  const parsed = users.parseUsers(`nikhil|manager|Meera|All branches|${HASH}`);
+  const user = await users.authenticateUser("nikhil", "correct-horse-battery", parsed);
+  assert.equal(user.role, "manager");
+  assert.equal(user.hash, undefined, "the hash must not travel back to the browser");
+  assert.equal(await users.authenticateUser("nikhil", "wrong", parsed), null);
+  assert.equal(await users.authenticateUser("ghost", "correct-horse-battery", parsed), null);
 });
 
 // ---- the endpoints -----------------------------------------------------------------------------
@@ -227,9 +292,14 @@ const extractHandler = (await load("api/extract-remark.mjs")).default;
 await check("signing in with the right password sets a session cookie", async () => {
   await withEnv(SIGNED_IN, async () => {
     const response = fakeResponse();
-    await sessionHandler({ method: "POST", body: { username: "agent123", password: "agent123" }, headers: {} }, response);
+    await sessionHandler({ method: "POST", body: { username: "agent123", password: "correct-horse-battery" }, headers: {} }, response);
     assert.equal(response.code, 200);
-    assert.equal(response.body.username, "agent123");
+    // The server answers with who this is, including the role. The browser is told; it does not
+    // assert. And the hash never travels.
+    assert.equal(response.body.user.username, "agent123");
+    assert.equal(response.body.user.role, "agent");
+    assert.equal(response.body.user.name, "Nikhil Rao");
+    assert.equal(response.body.user.hash, undefined);
     assert.match(response.headers["Set-Cookie"], new RegExp(auth.COOKIE_NAME));
   });
 });
@@ -285,7 +355,7 @@ await check("a valid cookie gets past the guard and on to the real work", async 
 });
 
 await check("an unconfigured deployment refuses rather than allows", async () => {
-  await withEnv({ SESSION_SECRET: null, API_LOGINS: null }, async () => {
+  await withEnv({ SESSION_SECRET: null, API_USERS: null }, async () => {
     const response = fakeResponse();
     await sonioxHandler({ method: "POST", body: {}, headers: {} }, response);
     assert.equal(response.code, 503);

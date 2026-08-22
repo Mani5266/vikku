@@ -69,9 +69,11 @@ export default function SignIn() {
     setError(null);
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    if (!signIn(username, password)) {
+    // Awaited now: signing in also asks the server, and its answer decides the role. Firing and
+    // forgetting would land somebody on a screen drawn for a role the server had not agreed to.
+    if (!(await signIn(username, password))) {
       setError("Wrong username or password.");
       setPassword("");
     }

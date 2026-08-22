@@ -24,11 +24,12 @@
 //
 // Fail closed
 //
-// With no `SESSION_SECRET` and no `API_LOGINS` configured, nothing authenticates and both
+// With no `SESSION_SECRET` and no `API_USERS` configured, nothing authenticates and both
 // endpoints refuse. An auth layer that quietly allows everything when misconfigured is worse than
 // no auth layer, because it looks like protection on the dashboard.
 
 import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
+import { configuredUsers } from "./users.mjs";
 
 export const COOKIE_NAME = "vikku_session";
 const DEFAULT_TTL_SECONDS = 60 * 60 * 12; // one shift
@@ -48,19 +49,14 @@ export function sessionSecret() {
   return env("SESSION_SECRET") || null;
 }
 
-/** `user:password,user:password` from the environment. Never a default. */
-export function configuredLogins() {
-  const raw = env("API_LOGINS");
-  if (!raw) return null;
-  const logins = new Map();
-  for (const pair of raw.split(",")) {
-    const at = pair.indexOf(":");
-    if (at <= 0) continue;
-    const username = pair.slice(0, at).trim();
-    const password = pair.slice(at + 1).trim();
-    if (username && password) logins.set(username, password);
-  }
-  return logins.size ? logins : null;
+/**
+ * Whether anybody can sign in at all.
+ *
+ * Reads the same records the session endpoint does, so "is this deployment configured" and "who
+ * may sign in" cannot disagree. A second copy of this list is a second thing to keep in step.
+ */
+export function hasConfiguredUsers() {
+  return configuredUsers().size > 0;
 }
 
 function base64url(buffer) {
@@ -165,11 +161,11 @@ export function clearedCookieHeader() {
  * production.
  */
 export function requireSession(request, response) {
-  if (!sessionSecret() || !configuredLogins()) {
+  if (!sessionSecret() || !hasConfiguredUsers()) {
     response.status(503).json({
       ok: false,
       error: "This deployment has no sign-in configured.",
-      detail: "Set SESSION_SECRET and API_LOGINS in the environment.",
+      detail: "Set SESSION_SECRET and API_USERS in the environment.",
     });
     return null;
   }

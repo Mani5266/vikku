@@ -41,7 +41,9 @@ export function SessionProvider({ children }) {
   }, [asParam, user]);
 
   /** Returns true when the pair matched. The screen shows the error on false. */
-  const signIn = useCallback((username, password) => {
+  const signIn = useCallback(async (username, password) => {
+    // The local list still decides whether this demo lets you in. Where an API is deployed, the
+    // server's answer replaces the role below, so the two cannot disagree about what you may do.
     const account = authenticate(username, password);
     if (!account) return false;
     try {
@@ -51,17 +53,26 @@ export function SessionProvider({ children }) {
     }
     setUser(account);
 
-    // Ask the API for a session cookie with the same credentials. The browser's own check decides
-    // what this app shows; this one decides whether the endpoints that cost money will answer.
-    // Deliberately not awaited: the API is optional, and a deployment without it — the static
-    // preview, the render test — must still sign in instantly.
-    fetch("/api/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    }).catch(() => {
-      // No API here. Listening will say so when somebody tries to use it.
-    });
+    // Ask the server who this is. Where an API is deployed its answer wins: the role comes back
+    // signed, from a record holding a scrypt hash the browser cannot read or change, rather than
+    // from a username typed into a box.
+    //
+    // A failure here is not a failed sign-in. There is no API on a static preview or in the render
+    // test and the demo has to keep working there — what is lost is the endpoints that cost money,
+    // and those say so themselves when somebody tries to use them.
+    try {
+      const response = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (response.ok) {
+        const body = await response.json().catch(() => ({}));
+        if (body?.user?.role) setUser({ ...account, ...body.user });
+      }
+    } catch {
+      // No API here.
+    }
 
     return true;
   }, []);
