@@ -348,7 +348,7 @@ const CASES = [
       "How did this one reach us?",
       "Somebody called or messaged us",
       "They walked into the hospital",
-      "Paste a list from a sheet",
+      "Bring in a list from a sheet",
       // The paths that need a server are named as unbuilt rather than left off the list.
       "Straight from Meta, Google or the website form",
       "Not built",
@@ -361,6 +361,13 @@ const CASES = [
     ],
   ],
   // The front desk is not always an agent seat, so a manager and an admin can take an enquiry too.
+  // The file picker sits on the bulk path, above the paste box. The reader itself is proved in
+  // test/xlsx.test.mjs against real archives; what is asserted here is only that the way in exists
+  // and says what it does with the file.
+  [
+    "/intake?as=agent123&path=bulk",
+    ["Add a lead", "Bring in a list from a sheet"],
+  ],
   ["/intake?as=manager123", ["Add a lead", "Who gets it"]],
   ["/intake?as=admin123", ["Add a lead"]],
   ["/intake?as=leadership123", ["This screen belongs to another role", "!How did this one reach us?"]],

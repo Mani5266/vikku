@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ClipboardPaste, UserPlus } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, FileSpreadsheet, UserPlus, X } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionCard, { StatusPill } from "@/components/shared/SectionCard";
 import DataTable from "@/components/shared/DataTable";
@@ -21,6 +21,7 @@ import {
   intakeProblems,
   pathByKey,
   parseBulk,
+  parseRows,
   platformFor,
 } from "@/lib/intake";
 
@@ -49,13 +50,23 @@ export default function Intake() {
   const [path, setPath] = useState("manual");
   const [draft, setDraft] = useState({});
   const [bulkText, setBulkText] = useState("");
+  // A chosen file produces rows directly. Text and rows are kept apart rather than turning the
+  // file back into a pasteable string: a name with a comma in it survives as a cell and would not
+  // survive the round trip.
+  const [fileRows, setFileRows] = useState(null);
+  const [fileName, setFileName] = useState(null);
+  const [fileError, setFileError] = useState(null);
   const [touched, setTouched] = useState(false);
 
   const roster = useMemo(() => rosterLoad(leads), [leads]);
   const problems = useMemo(() => intakeProblems(draft, { path }), [draft, path]);
   const duplicates = useMemo(() => findDuplicates(draft, leads), [draft, leads]);
   const assignment = useMemo(() => assignmentFor(draft, roster), [draft, roster]);
-  const parsed = useMemo(() => parseBulk(bulkText), [bulkText]);
+  // One guard, whichever door the leads came through.
+  const parsed = useMemo(
+    () => (fileRows ? parseRows(fileRows) : parseBulk(bulkText)),
+    [fileRows, bulkText]
+  );
 
   const set = (patch) => setDraft((current) => ({ ...current, ...patch }));
   const chosen = pathByKey(path);
@@ -72,12 +83,42 @@ export default function Intake() {
     navigate(`/leads/${created.id}`);
   };
 
+  const clearFile = () => {
+    setFileRows(null);
+    setFileName(null);
+    setFileError(null);
+  };
+
+  const chooseFile = async (file) => {
+    if (!file) return;
+    clearFile();
+    try {
+      // The reader is loaded only when somebody actually picks a file. It is dead weight on the
+      // first paint of every other screen, and this app is opened on hospital mobile data.
+      const reader = await import("@/lib/xlsx.js");
+      const rows = reader.isSpreadsheet(file.name)
+        ? await reader.readWorkbook(file)
+        : reader.readDelimited(await file.text());
+      if (!rows.length) {
+        setFileError("There are no rows in that file.");
+        return;
+      }
+      setFileRows(rows);
+      setFileName(file.name);
+    } catch (error) {
+      // Named, not swallowed. A file that will not open and says nothing is a file somebody
+      // tries three more times.
+      setFileError(error?.message || "That file could not be read.");
+    }
+  };
+
   const saveBulk = () => {
     if (!parsed.rows.length) return;
     const records = parsed.rows.map((row) => buildLead(row, { path: "bulk", assignment: assignmentFor(row, roster) }));
     addLeads(records);
     toast({ title: `${records.length} leads added`, description: "They are at the top of the queue, uncalled." });
     setBulkText("");
+    clearFile();
     navigate("/");
   };
 
@@ -236,7 +277,45 @@ export default function Intake() {
         {path === "bulk" && (
           <>
             <SectionCard
-              title="Paste the list"
+              title="Choose the sheet"
+              caption="An .xlsx straight from Excel, or a .csv. The first sheet is read. Nothing is uploaded anywhere — the file is opened in this browser."
+              control={
+                fileName && (
+                  <Button size="sm" variant="outline" onClick={clearFile}>
+                    <X className="h-4 w-4" />
+                    Remove
+                  </Button>
+                )
+              }
+            >
+              <label className="flex h-12 w-full cursor-pointer items-center gap-3 rounded-md bg-card px-4 text-sm font-semibold shadow-card active:bg-secondary">
+                <FileSpreadsheet className="h-5 w-5 text-primary" />
+                {fileName ?? `Choose an .xlsx or .csv file`}
+                <input
+                  type="file"
+                  accept=".xlsx,.xlsm,.csv,.tsv,.txt"
+                  className="sr-only"
+                  onChange={(e) => {
+                    chooseFile(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {fileError && (
+                <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-danger">
+                  <AlertTriangle className="h-4 w-4" />
+                  {fileError}
+                </p>
+              )}
+              {fileRows && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {`${fileRows.length} row(s) read from the sheet. Columns are read in order: ${BULK_COLUMNS.join(" · ")}.`}
+                </p>
+              )}
+            </SectionCard>
+
+            <SectionCard
+              title={fileRows ? "Or paste instead" : "Or paste the list"}
               caption={`Columns, in order: ${BULK_COLUMNS.join(" · ")}. Tabs or commas. A header row is skipped. Every row goes through the same guard as a typed lead.`}
               control={
                 bulkText && (
@@ -248,6 +327,7 @@ export default function Intake() {
             >
               <Textarea
                 rows={8}
+                disabled={Boolean(fileRows)}
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
                 placeholder={`Ravi Kumar\t9845011225\tPiles\tMeta Ads\tPiles — Jayanagar — Aug\tJayanagar`}

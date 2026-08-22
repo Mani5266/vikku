@@ -8,7 +8,7 @@ from `implementation/` and driven by real screens against seeded data.
 cd app
 npm install
 npm run dev      # http://localhost:5173
-npm test         # engine (23) + access (13) + agent fast path (12) + 36 rendered routes
+npm test         # 11 suites — 256 checks — then 78 server-rendered routes
 npm run build    # production bundle in app/dist
 ```
 
@@ -559,15 +559,18 @@ reason — a suppression is evidence that a guard fired, not a dropped message.
 ## Tests
 
 ```bash
-npm run test:engine   # implementation/test/communicationEngine.test.mjs — 23 checks
-npm run test:rbac     # test/rbac.test.mjs — 15 access checks over the whole role matrix
-npm run test:agent    # test/agent.test.mjs — 12 checks that the call fast path writes valid data
-npm run test:sheet    # test/sheet.test.mjs — 14 checks against the hospital's real weekly export
-npm run test:screens  # test/screens.test.mjs — 36 checks on qualification, plans, appointments, closure and the stage flow
-npm run test:ops      # test/operations.test.mjs — 57 checks on the eight manager, operations and admin screens
-npm run test:seed     # test/seed.test.mjs — 22 checks on what the demo desk claims to cover
-npm run test:design   # test/design.test.mjs — 12 checks on the chart palette and trend arithmetic
-npm run test:render   # server-renders all 58 routes and asserts on their content
+npm run test:engine    # implementation/test/communicationEngine.test.mjs — 23 checks
+npm run test:rbac      # test/rbac.test.mjs — 15 access checks over the whole role matrix
+npm run test:agent     # test/agent.test.mjs — 12 checks that the call fast path writes valid data
+npm run test:screens   # test/screens.test.mjs — 36 checks on qualification, plans, appointments, closure and the stage flow
+npm run test:ops       # test/operations.test.mjs — 57 checks on the eight manager, operations and admin screens
+npm run test:seed      # test/seed.test.mjs — 24 checks on what the demo desk claims to cover
+npm run test:treatment # test/treatment.test.mjs — 20 checks on the half of the funnel after the consultation
+npm run test:intake    # test/intake.test.mjs — 26 checks on the mouth of the funnel and the §3.1 write guard
+npm run test:xlsx      # test/xlsx.test.mjs — 17 checks on the spreadsheet reader, against real .xlsx archives
+npm run test:sheet     # test/sheet.test.mjs — 14 checks against the hospital's real weekly export
+npm run test:design    # test/design.test.mjs — 12 checks on the chart palette and trend arithmetic
+npm run test:render    # server-renders all 78 routes and asserts on their content
 ```
 
 `test:design` enforces the claims `design/design.md` makes: the ramp stays at six steps, a slice
@@ -719,7 +722,7 @@ against it. What each of those eight is missing against its own spec, stated rat
 | M8 Escalation & Objection Desk | All six §24 objections with owner and prescribed action, live queues where the data supports one, and the closed-without-the-action pool with its recoverable count and quoted value | Claiming an escalation, opening the matching tool, and the writes behind resolution. Three of the six objections have no live detector because an open lead's objection lives in the call remark, which is the AI layer |
 | O1 Appointments & No-shows | The confirmation, no-show and arrival boards, the §17 reminder sequence per appointment, no-show attribution between the hospital and the patient, and reminder count against kept rate | The calendar itself — there is no appointment date or time in the data model, so no slot, no doctor's day and no double-booking check. Cancellations, both sides. Marking somebody arrived |
 | O2 Financial Counseling Desk | The six §17 post-consultation states, counseling coverage as process compliance, conversion with and without counseling, insurance and discount effects, and the §33 closure guard in both directions | Logging a session, sending the package comparison, checking insurance, raising a discount request, and booking surgery. The patient's stated budget is not captured anywhere, so the gap cannot be measured |
-| S1 Lead Sources & Intake | The seventeen §5 sources with platform aliases folded together, the §3.1 attribution audit with what each missing field blocks, the hierarchy as deep as the data goes, and duplicate detection on both rules | Integrations and their field mapping, editing the registry, the manual entry form, and merging duplicates. The §3.1 write-layer guard exists and is tested; nothing calls it yet |
+| S1 Lead Sources & Intake | The seventeen §5 sources with platform aliases folded together, the §3.1 attribution audit with what each missing field blocks, the hierarchy as deep as the data goes, and duplicate detection on both rules | Integrations and their field mapping, editing the registry, the manual entry form, and merging duplicates. Editing the registry and merging duplicates. The §3.1 write-layer guard is now called by every intake path — a typed lead, a pasted block and a chosen spreadsheet all go through it |
 
 A4, A5, A8 and A9 were in that list until the agent group was completed. What is still missing on
 them, stated rather than implied: A4 does not route an override to a manager for review; A5 cannot

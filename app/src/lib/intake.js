@@ -45,9 +45,9 @@ export const INTAKE_PATHS = [
   },
   {
     key: "bulk",
-    label: "Paste a list from a sheet",
+    label: "Bring in a list from a sheet",
     built: true,
-    detail: "How this hospital works today. Every row goes through the same guard as a typed lead.",
+    detail: "How this hospital works today. Choose the file or paste the cells — every row goes through the same guard as a typed lead.",
     defaults: { lead_type: "Inbound", form: "Spreadsheet import" },
   },
   {
@@ -234,19 +234,28 @@ function hash(text) {
  */
 export const BULK_COLUMNS = ["Name", "Phone", "Condition", "Source", "Campaign", "Branch"];
 
-export function parseBulk(text, { path = "bulk" } = {}) {
-  const rows = [];
+/**
+ * Rows of cells in, drafts out, with everything refused listed rather than dropped.
+ *
+ * This is the shared middle of both bulk paths. A pasted block and a chosen .xlsx arrive as the
+ * same thing — an array of rows of strings — so a spreadsheet cannot be held to a different
+ * standard than text typed by hand. One guard, one place, and the §3.1 attribution rule cannot be
+ * walked past by picking a different button on the form.
+ */
+export function parseRows(rows, { path = "bulk" } = {}) {
+  const drafts = [];
   const rejected = [];
 
-  const lines = String(text ?? "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  for (const [index, cells] of (rows || []).entries()) {
+    const line = index + 1;
+    const text = cells.join("\t");
 
-  for (const [index, line] of lines.entries()) {
-    const cells = line.split(/\t|\s*,\s*|\s{2,}/).map((cell) => cell.trim());
-    if (cells.length < 3) {
-      rejected.push({ line: index + 1, text: line, why: "Fewer than three columns — need at least a name, a number and a condition" });
+    if (cells.filter((cell) => cell !== "").length < 3) {
+      rejected.push({
+        line,
+        text,
+        why: "Fewer than three columns — need at least a name, a number and a condition",
+      });
       continue;
     }
     // The header, in whatever case they typed it.
@@ -262,11 +271,22 @@ export function parseBulk(text, { path = "bulk" } = {}) {
     };
     const problems = intakeProblems(draft, { path });
     if (problems.length) {
-      rejected.push({ line: index + 1, text: line, why: problems[0] });
+      rejected.push({ line, text, why: problems[0] });
       continue;
     }
-    rows.push(draft);
+    drafts.push(draft);
   }
 
-  return { rows, rejected };
+  return { rows: drafts, rejected };
+}
+
+/** A pasted block of text, split into the same rows a spreadsheet produces. */
+export function parseBulk(text, { path = "bulk" } = {}) {
+  const rows = String(text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split(/\t|\s*,\s*|\s{2,}/).map((cell) => cell.trim()));
+
+  return parseRows(rows, { path });
 }
